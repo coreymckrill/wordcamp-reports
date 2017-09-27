@@ -94,7 +94,5 @@ add_action( 'admin_menu', __NAMESPACE__ . '\add_reports_page' );
 
 
 function render_reports_page() {
-	$wordcamp_status = new Report\WordCamp_Status( '2017-08-01', '2017-08-15' );
-
 	include get_views_dir_path() . 'admin-reports.php';
 }

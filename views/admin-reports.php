@@ -11,4 +11,14 @@ use WordCamp\Reports\Report;
 
 /** @var Report\WordCamp_Status $wordcamp_status */
 
-var_dump( $wordcamp_status->get_data() );
+?>
+
+<div class="wrap">
+
+<?php
+$wordcamp_status = new Report\WordCamp_Status( '2017-04-01', '2017-06-01' );
+$data = $wordcamp_status->get_data();
+$wordcamp_status->render_html($data);
+?>
+
+</div>
