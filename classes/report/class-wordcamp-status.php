@@ -118,8 +118,14 @@ class WordCamp_Status extends Base {
 				continue;
 			}
 
+			if ( false !== $site_id = \get_wordcamp_site_id( $wordcamp ) ) {
+				$name = \get_wordcamp_name( $site_id );
+			} else {
+				$name = get_the_title( $wordcamp );
+			}
+
 			$data[ $wordcamp->ID ] = array(
-				'name'          => \get_wordcamp_name( \get_wordcamp_site_id( $wordcamp ) ),
+				'name'          => $name,
 				'url'           => \get_post_meta( $wordcamp->ID, 'URL', true ),
 				'post'          => $wordcamp,
 				'logs'          => $logs,
