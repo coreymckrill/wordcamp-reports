@@ -127,8 +127,6 @@ class WordCamp_Status extends Base {
 
 			$data[ $wordcamp->ID ] = array(
 				'name'          => $name,
-				'url'           => \get_post_meta( $wordcamp->ID, 'URL', true ),
-				'post'          => $wordcamp,
 				'logs'          => $logs,
 				'latest_log'    => $latest_log,
 				'latest_status' => $latest_status,
