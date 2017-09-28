@@ -142,20 +142,22 @@ class WordCamp_Status extends Base {
 		$post_args = array(
 			'post_type'           => \WCPT_POST_TYPE_ID,
 			'post_status'         => 'any',
+			'posts_per_page'      => 9999,
 			'nopaging'            => true,
+			'no_found_rows'       => false,
 			'ignore_sticky_posts' => true,
 			// Don't include WordCamps that happened more than 3 months ago.
 			'meta_query'          => array(
 				'relation' => 'OR',
 				array(
 					'key'     => 'Start Date (YYYY-mm-dd)',
-					'value'   => strtotime( '-3 months', $this->start_date->getTimestamp() ),
-					'compare' => '>=',
-					'type'    => 'NUMERIC',
+					'compare' => 'NOT EXISTS',
 				),
 				array(
 					'key'     => 'Start Date (YYYY-mm-dd)',
-					'compare' => 'NOT EXISTS',
+					'compare' => '>=',
+					'value'   => strtotime( '-3 months', $this->start_date->getTimestamp() ),
+					'type'    => 'NUMERIC',
 				),
 			),
 		);
