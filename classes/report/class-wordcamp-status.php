@@ -118,7 +118,7 @@ class WordCamp_Status extends Base {
 				continue;
 			}
 
-			if ( false !== $site_id = \get_wordcamp_site_id( $wordcamp ) ) {
+			if ( $site_id = \get_wordcamp_site_id( $wordcamp ) ) {
 				$name = \get_wordcamp_name( $site_id );
 			} else {
 				$name = get_the_title( $wordcamp );
