@@ -101,9 +101,9 @@ class WordCamp_Status extends Base {
 				continue;
 			}
 
-			reset( $logs );
-			$latest_log    = current( $logs );
+			$latest_log    = end( $logs );
 			$latest_status = $this->get_log_status_result( $latest_log );
+			reset( $logs );
 
 			// Trim log entries occurring before the date range.
 			$logs = array_filter( $logs, function( $entry ) {
@@ -183,13 +183,13 @@ class WordCamp_Status extends Base {
 		$log_entries = \get_post_meta( $wordcamp->ID, '_status_change' );
 
 		if ( ! empty( $log_entries ) ) {
-			// Sort log entries in reverse-chronological order.
+			// Sort log entries in chronological order.
 			usort( $log_entries, function( $a, $b ) {
 				if ( $a['timestamp'] === $b['timestamp'] ) {
 					return 0;
 				}
 
-				return ( $a['timestamp'] > $b['timestamp'] ) ? -1 : 1;
+				return ( $a['timestamp'] > $b['timestamp'] ) ? 1 : -1;
 			} );
 
 			return $log_entries;
