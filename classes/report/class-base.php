@@ -7,16 +7,13 @@ namespace WordCamp\Reports\Report;
 defined( 'WPINC' ) || die();
 
 
-class Base {
+abstract class Base {
 
-	public function get_data() {}
-
-
-	public function create_post() {}
+	public abstract function get_data();
 
 
-	public function send_email() {}
+	public abstract static function render_admin_page();
 
 
-	public function export_csv() {}
+	public function render_html() {}
 }

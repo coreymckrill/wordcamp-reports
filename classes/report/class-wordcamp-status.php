@@ -8,15 +8,47 @@ defined( 'WPINC' ) || die();
 
 use WordCamp\Reports;
 
-
+/**
+ * Class WordCamp_Status
+ *
+ * @package WordCamp\Reports\Report
+ */
 class WordCamp_Status extends Base {
+	/**
+	 * Report name.
+	 */
+	const NAME = 'WordCamp Status';
 
-	public $start_date = null;
+	/**
+	 * Report slug.
+	 */
+	const SLUG = 'wordcamp-status';
 
+	/**
+	 * Report description.
+	 */
+	const DESCRIPTION = 'A summary of WordCamp status changes during a given time period.';
 
-	public $end_date = null;
+	/**
+	 * The start of the date range for the report.
+	 *
+	 * @var \DateTime|null
+	 */
+	protected $start_date = null;
 
+	/**
+	 * The end of the date range for the report.
+	 *
+	 * @var \DateTime|null
+	 */
+	protected $end_date = null;
 
+	/**
+	 * WordCamp_Status constructor.
+	 *
+	 * @param \DateTime $start_date The start of the date range for the report.
+	 * @param \DateTime $end_date   The end of the date range for the report.
+	 */
 	public function __construct( $start_date, $end_date ) {
 		$this->start_date = new \DateTime( $start_date );
 		$this->end_date = new \DateTime( $end_date );
@@ -28,16 +60,28 @@ class WordCamp_Status extends Base {
 		}
 	}
 
-
+	/**
+	 * Filter: Set the locale to en_US.
+	 *
+	 * Some translated strings in the wcpt plugin are used here for comparison and matching. To ensure
+	 * that the matching happens correctly, we need need to prevent these strings from being converted
+	 * to a different locale.
+	 *
+	 * @return string
+	 */
 	public function set_locale_to_en_US() {
 		return 'en_US';
 	}
 
-
+	/**
+	 * Query, parse, and compile the data for the report.
+	 *
+	 * @return array
+	 */
 	public function get_data() {
 		\add_filter( 'locale', array( $this, 'set_locale_to_en_US' ) );
 
-		$wordcamp_posts = $this->get_all_wordcamp_posts();
+		$wordcamp_posts = $this->get_wordcamp_posts();
 		$data           = array();
 
 		foreach ( $wordcamp_posts as $wordcamp ) {
@@ -89,19 +133,43 @@ class WordCamp_Status extends Base {
 		return $data;
 	}
 
-
-	protected function get_all_wordcamp_posts() {
+	/**
+	 * Get all current WordCamp posts.
+	 *
+	 * @return array
+	 */
+	protected function get_wordcamp_posts() {
 		$post_args = array(
 			'post_type'           => \WCPT_POST_TYPE_ID,
 			'post_status'         => 'any',
 			'nopaging'            => true,
 			'ignore_sticky_posts' => true,
+			// Don't include WordCamps that happened more than 3 months ago.
+			'meta_query'          => array(
+				'relation' => 'OR',
+				array(
+					'key'     => 'Start Date (YYYY-mm-dd)',
+					'value'   => strtotime( '-3 months', $this->start_date->getTimestamp() ),
+					'compare' => '>=',
+					'type'    => 'NUMERIC',
+				),
+				array(
+					'key'     => 'Start Date (YYYY-mm-dd)',
+					'compare' => 'NOT EXISTS',
+				),
+			),
 		);
 
 		return \get_posts( $post_args );
 	}
 
-
+	/**
+	 * Retrieve the log of status changes for a particular WordCamp.
+	 *
+	 * @param \WP_Post $wordcamp A WordCamp post.
+	 *
+	 * @return array
+	 */
 	protected function get_wordcamp_status_logs( \WP_Post $wordcamp ) {
 		$log_entries = \get_post_meta( $wordcamp->ID, '_status_change' );
 
@@ -121,7 +189,19 @@ class WordCamp_Status extends Base {
 		return array();
 	}
 
-
+	/**
+	 * Determine the ending status of a particular status change event.
+	 *
+	 * E.g. for this event:
+	 *
+	 *     Needs Vetting → More Info Requested
+	 *
+	 * The ending status would be "More Info Requested".
+	 *
+	 * @param array $log_entry A status change log entry.
+	 *
+	 * @return string
+	 */
 	protected function get_log_status_result( array $log_entry ) {
 		if ( isset( $log_entry['message'] ) ) {
 			$pieces = explode( ' &rarr; ', $log_entry['message'] );
@@ -134,7 +214,13 @@ class WordCamp_Status extends Base {
 		return '';
 	}
 
-
+	/**
+	 * Given the ID of a WordCamp status, determine the ID string.
+	 *
+	 * @param string $status_name A WordCamp status name.
+	 *
+	 * @return string
+	 */
 	protected function get_status_id_from_name( $status_name ) {
 		$statuses = array_flip( \WordCamp_Loader::get_post_statuses() );
 
@@ -145,7 +231,11 @@ class WordCamp_Status extends Base {
 		return '';
 	}
 
-
+	/**
+	 * A list of status IDs for statuses that indicate a camp is not active.
+	 *
+	 * @return array
+	 */
 	protected function get_inactive_statuses() {
 		return array(
 			'wcpt-rejected',
@@ -155,8 +245,33 @@ class WordCamp_Status extends Base {
 		);
 	}
 
+	/**
+	 * Render the page for this report in the WP Admin.
+	 *
+	 * @return void
+	 */
+	public static function render_admin_page() {
+		$action     = filter_input( INPUT_POST, 'action' );
+		$start_date = filter_input( INPUT_POST, 'start-date' );
+		$end_date   = filter_input( INPUT_POST, 'end-date' );
+		$nonce      = filter_input( INPUT_POST, self::SLUG . '-nonce' );
+		$report     = null;
 
-	public function render_html( $data ) {
+		if ( 'run-report' === $action && wp_verify_nonce( $nonce, 'run-report' ) ) {
+			$report = new self( $start_date, $end_date );
+		}
+
+		include Reports\get_views_dir_path() . 'report/wordcamp-status.php';
+	}
+
+	/**
+	 * Render an HTML version of the report output.
+	 *
+	 * @return void
+	 */
+	public function render_html() {
+		$data       = $this->get_data();
+
 		$start_date = $this->start_date;
 		$end_date   = $this->end_date;
 
@@ -178,6 +293,6 @@ class WordCamp_Status extends Base {
 
 		$statuses = \WordCamp_Loader::get_post_statuses();
 
-		include Reports\get_views_dir_path() . 'report/wordcamp-status-html.php';
+		include Reports\get_views_dir_path() . 'html/wordcamp-status.php';
 	}
 }

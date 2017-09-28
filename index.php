@@ -13,8 +13,6 @@
 namespace WordCamp\Reports;
 defined( 'WPINC' ) || die();
 
-use WordCamp\Reports\Report;
-
 const JS_VERSION  = 1;
 const CSS_VERSION = 1;
 
@@ -78,21 +76,75 @@ spl_autoload_register( function( $class ) {
 	}
 } );
 
+/**
+ * A list of available report classes.
+ *
+ * @todo Maybe parse the classes/report directory and generate this dynamically?
+ *
+ * @return array
+ */
+function get_report_classes() {
+	return array(
+		__NAMESPACE__ . '\Report\WordCamp_Status',
+	);
+}
 
+/**
+ * Register the Reports page in the WP Admin.
+ *
+ * @hook action admin_menu
+ *
+ * @return void
+ */
 function add_reports_page() {
 	\add_submenu_page(
 		'index.php',
 		__( 'Reports', 'wordcamporg' ),
 		__( 'Reports', 'wordcamporg' ),
 		'manage_network',
-		'reports',
-		__NAMESPACE__ . '\render_reports_page'
+		'wordcamp-reports',
+		__NAMESPACE__ . '\render_page'
 	);
 }
 
 add_action( 'admin_menu', __NAMESPACE__ . '\add_reports_page' );
 
+/**
+ * Render the main Reports page or use an appropriate class method to
+ * render a particular child report page.
+ *
+ * @return void
+ */
+function render_page() {
+	$report = filter_input( INPUT_GET, 'report', FILTER_SANITIZE_STRING );
+	$report_classes = get_report_classes();
 
-function render_reports_page() {
-	include get_views_dir_path() . 'admin-reports.php';
+	$report_slugs = array_map( function( $class ) {
+		return $class::SLUG;
+	}, $report_classes );
+
+	$reports = array_combine( $report_slugs, $report_classes );
+
+	if ( in_array( $report, $report_slugs, true ) ) {
+		$reports[ $report ]::render_admin_page();
+	} else {
+		include get_views_dir_path() . 'admin.php';
+	}
+}
+
+/**
+ * Get the URL for a Reports-related page.
+ *
+ * @param string $report_slug The slug string for a particular report.
+ *
+ * @return string
+ */
+function get_page_url( $report_slug = '' ) {
+	$url = add_query_arg( array( 'page' => 'wordcamp-reports' ), admin_url( 'index.php' ) );
+
+	if ( $report_slug ) {
+		$url = add_query_arg( array( 'report' => sanitize_key( $report_slug ) ), $url );
+	}
+
+	return $url;
 }

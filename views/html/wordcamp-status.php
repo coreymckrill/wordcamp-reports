@@ -3,7 +3,7 @@
  * @package WordCamp\Reports
  */
 
-namespace WordCamp\Reports\Views\WordCamp_Status\HTML;
+namespace WordCamp\Reports\Views\HTML\WordCamp_Status;
 defined( 'WPINC' ) || die();
 
 /** @var \DateTime $start_date */
