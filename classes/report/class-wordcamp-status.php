@@ -101,7 +101,8 @@ class WordCamp_Status extends Base {
 				continue;
 			}
 
-			$latest_log    = $logs[0];
+			reset( $logs );
+			$latest_log    = current( $logs );
 			$latest_status = $this->get_log_status_result( $latest_log );
 
 			// Trim log entries occurring before the date range.
@@ -210,7 +211,7 @@ class WordCamp_Status extends Base {
 	 *
 	 * @return string
 	 */
-	protected function get_log_status_result( array $log_entry ) {
+	protected function get_log_status_result( $log_entry ) {
 		if ( isset( $log_entry['message'] ) ) {
 			$pieces = explode( ' &rarr; ', $log_entry['message'] );
 
