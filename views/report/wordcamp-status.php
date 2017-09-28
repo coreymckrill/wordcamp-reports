@@ -6,6 +6,7 @@
 namespace WordCamp\Reports\Views\Report\WordCamp_Status;
 defined( 'WPINC' ) || die();
 
+use WordCamp\Reports;
 use WordCamp\Reports\Report;
 
 /** @var string $start_date */
@@ -15,14 +16,14 @@ use WordCamp\Reports\Report;
 
 <div class="wrap">
 	<h1>
-		<?php
-		printf(
-			'%1$s &raquo; %2$s',
-			'WordCamp Reports',
-			Report\WordCamp_Status::NAME
-		);
-		?>
+		<a href="<?php echo esc_attr( Reports\get_page_url() ); ?>">WordCamp Reports</a>
+		&raquo;
+		<?php echo esc_html( Report\WordCamp_Status::NAME ); ?>
 	</h1>
+
+	<p>
+		<?php echo wp_kses_post( Report\WordCamp_Status::DESCRIPTION ); ?>
+	</p>
 
 	<form method="post" action="">
 		<input type="hidden" name="action" value="run-report" />
