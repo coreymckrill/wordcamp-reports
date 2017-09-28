@@ -89,11 +89,11 @@ class WordCamp_Status extends Base {
 
 			// Trim log entries occurring after the date range.
 			$logs = array_filter( $logs, function( $entry ) {
-				if ( $this->end_date->getTimestamp() >= $entry['timestamp'] ) {
-					return true;
+				if ( $entry['timestamp'] > $this->end_date->getTimestamp() ) {
+					return false;
 				}
 
-				return false;
+				return true;
 			} );
 
 			// Skip if there is no log activity before the end of the date range.
@@ -106,15 +106,15 @@ class WordCamp_Status extends Base {
 
 			// Trim log entries occurring before the date range.
 			$logs = array_filter( $logs, function( $entry ) {
-				if ( $this->start_date->getTimestamp() <= $entry['timestamp'] ) {
-					return true;
+				if ( $entry['timestamp'] < $this->start_date->getTimestamp() ) {
+					return false;
 				}
 
-				return false;
+				return true;
 			} );
 
 			// Skip if there is no log activity in the date range and the camp has an inactive status.
-			if ( empty( $logs ) && in_array( $latest_status, $this->get_inactive_statuses(), true ) ) {
+			if ( empty( $logs ) && ( in_array( $latest_status, $this->get_inactive_statuses(), true ) || ! $latest_status ) ) {
 				continue;
 			}
 
