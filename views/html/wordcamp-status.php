@@ -44,3 +44,7 @@ defined( 'WPINC' ) || die();
 	<?php endforeach; ?>
 	</ul>
 <?php endif; ?>
+
+<?php if ( empty( $active_camps ) && empty( $inactive_camps ) ) : ?>
+	<h3>No data for the time between <?php echo esc_html( $start_date->format( 'M jS, Y' ) ); ?> and <?php echo esc_html( $end_date->format( 'M jS, Y' ) ); ?></h3>
+<?php endif; ?>
