@@ -151,6 +151,8 @@ class WordCamp_Status extends Base {
 			'nopaging'            => true,
 			'no_found_rows'       => false,
 			'ignore_sticky_posts' => true,
+			'orderby'             => 'date',
+			'order'               => 'ASC',
 			// Don't include WordCamps that happened more than 3 months ago.
 			'meta_query'          => array(
 				'relation' => 'OR',
