@@ -86,6 +86,7 @@ spl_autoload_register( function( $class ) {
 function get_report_classes() {
 	return array(
 		__NAMESPACE__ . '\Report\WordCamp_Status',
+		__NAMESPACE__ . '\Report\Ticket_Sales',
 	);
 }
 
