@@ -186,6 +186,11 @@ class WordCamp_Status extends Base {
 				),
 				array(
 					'key'     => 'Start Date (YYYY-mm-dd)',
+					'compare' => '=',
+					'value'   => '',
+				),
+				array(
+					'key'     => 'Start Date (YYYY-mm-dd)',
 					'compare' => '>=',
 					'value'   => strtotime( '-3 months', $this->start_date->getTimestamp() ),
 					'type'    => 'NUMERIC',
