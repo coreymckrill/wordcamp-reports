@@ -9,8 +9,10 @@ defined( 'WPINC' ) || die();
 use WordCamp\Reports;
 use WordCamp\Reports\Report;
 
+/** @var array  $statuses */
 /** @var string $start_date */
 /** @var string $end_date */
+/** @var string $status */
 /** @var Report\WordCamp_Status|null $report */
 ?>
 
@@ -38,6 +40,17 @@ use WordCamp\Reports\Report;
 				<tr>
 					<th scope="row"><label for="end-date">End Date</label></th>
 					<td><input type="date" id="end-date" name="end-date" value="<?php echo esc_attr( $end_date ) ?>" /></td>
+				</tr>
+				<tr>
+					<th scope="row"><label for="status">Status</label></th>
+					<td>
+						<select id="status" name="status">
+							<option value=""<?php selected( null, $status ); ?>>Any</option>
+							<?php foreach ( $statuses as $value => $label ) : ?>
+								<option value="<?php echo esc_attr( $value ); ?>"<?php selected( $value, $status ); ?>><?php echo esc_attr( $label ); ?></option>
+							<?php endforeach; ?>
+						</select>
+					</td>
 				</tr>
 			</tbody>
 		</table>

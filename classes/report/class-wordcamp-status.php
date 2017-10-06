@@ -44,19 +44,31 @@ class WordCamp_Status extends Base {
 	protected $end_date = null;
 
 	/**
+	 * The status to filter for in the report.
+	 *
+	 * @var string
+	 */
+	protected $status = '';
+
+	/**
 	 * WordCamp_Status constructor.
 	 *
 	 * @param \DateTime $start_date The start of the date range for the report.
 	 * @param \DateTime $end_date   The end of the date range for the report.
+	 * @param string    $status     Optional. The status to filter for in the report.
 	 */
-	public function __construct( $start_date, $end_date ) {
+	public function __construct( $start_date, $end_date, $status = '' ) {
 		$this->start_date = new \DateTime( $start_date );
-		$this->end_date = new \DateTime( $end_date );
+		$this->end_date   = new \DateTime( $end_date );
 
 		// If the end date doesn't have a specific time, make sure
 		// the entire day is included.
 		if ( '00:00:00' === $this->end_date->format( 'H:i:s' ) ) {
 			$this->end_date->setTime( 23, 59, 59 );
+		}
+
+		if ( array_key_exists( $status, self::get_all_statuses() ) ) {
+			$this->status = $status;
 		}
 	}
 
@@ -82,6 +94,7 @@ class WordCamp_Status extends Base {
 		\add_filter( 'locale', array( $this, 'set_locale_to_en_US' ) );
 
 		$wordcamp_posts = $this->get_wordcamp_posts();
+		$statuses       = self::get_all_statuses();
 		$data           = array();
 
 		foreach ( $wordcamp_posts as $wordcamp ) {
@@ -115,8 +128,19 @@ class WordCamp_Status extends Base {
 			} );
 
 			// Skip if there is no log activity in the date range and the camp has an inactive status.
-			if ( empty( $logs ) && ( in_array( $latest_status, $this->get_inactive_statuses(), true ) || ! $latest_status ) ) {
+			if ( empty( $logs ) && ( in_array( $latest_status, self::get_inactive_statuses(), true ) || ! $latest_status ) ) {
 				continue;
+			}
+
+			// Skip if there is no log entry with a resulting status that matches the status filter.
+			if ( $this->status && $latest_status !== $this->status ) {
+				$filtered = array_filter( $logs, function( $entry ) use ( $statuses ) {
+					return preg_match( '/' . preg_quote( $statuses[ $this->status ], '/' ) . '$/', $entry['message'] );
+				} );
+
+				if ( empty( $filtered ) ) {
+					continue;
+				}
 			}
 
 			if ( $site_id = \get_wordcamp_site_id( $wordcamp ) ) {
@@ -231,7 +255,7 @@ class WordCamp_Status extends Base {
 	 * @return string
 	 */
 	protected function get_status_id_from_name( $status_name ) {
-		$statuses = array_flip( \WordCamp_Loader::get_post_statuses() );
+		$statuses = array_flip( self::get_all_statuses() );
 
 		if ( isset( $statuses[ $status_name ] ) ) {
 			return $statuses[ $status_name ];
@@ -241,36 +265,28 @@ class WordCamp_Status extends Base {
 	}
 
 	/**
+	 * A list of all possible WordCamp post statuses.
+	 *
+	 * Wrapper method to help minimize coupling with the WCPT plugin.
+	 *
+	 * @return array
+	 */
+	protected static function get_all_statuses() {
+		return \WordCamp_Loader::get_post_statuses();
+	}
+
+	/**
 	 * A list of status IDs for statuses that indicate a camp is not active.
 	 *
 	 * @return array
 	 */
-	protected function get_inactive_statuses() {
+	protected static function get_inactive_statuses() {
 		return array(
 			'wcpt-rejected',
 			'wcpt-cancelled',
 			'wcpt-scheduled',
 			'wcpt-closed',
 		);
-	}
-
-	/**
-	 * Render the page for this report in the WP Admin.
-	 *
-	 * @return void
-	 */
-	public static function render_admin_page() {
-		$action     = filter_input( INPUT_POST, 'action' );
-		$start_date = filter_input( INPUT_POST, 'start-date' );
-		$end_date   = filter_input( INPUT_POST, 'end-date' );
-		$nonce      = filter_input( INPUT_POST, self::SLUG . '-nonce' );
-		$report     = null;
-
-		if ( 'run-report' === $action && wp_verify_nonce( $nonce, 'run-report' ) ) {
-			$report = new self( $start_date, $end_date );
-		}
-
-		include Reports\get_views_dir_path() . 'report/wordcamp-status.php';
 	}
 
 	/**
@@ -283,6 +299,7 @@ class WordCamp_Status extends Base {
 
 		$start_date = $this->start_date;
 		$end_date   = $this->end_date;
+		$status     = $this->status;
 
 		$active_camps = array_filter( $data, function( $wordcamp ) {
 			if ( ! empty( $wordcamp['logs'] ) ) {
@@ -300,8 +317,31 @@ class WordCamp_Status extends Base {
 			return false;
 		} );
 
-		$statuses = \WordCamp_Loader::get_post_statuses();
+		$statuses = self::get_all_statuses();
 
 		include Reports\get_views_dir_path() . 'html/wordcamp-status.php';
+	}
+
+	/**
+	 * Render the page for this report in the WP Admin.
+	 *
+	 * @return void
+	 */
+	public static function render_admin_page() {
+		$statuses = self::get_all_statuses();
+
+		$action     = filter_input( INPUT_POST, 'action' );
+		$start_date = filter_input( INPUT_POST, 'start-date' );
+		$end_date   = filter_input( INPUT_POST, 'end-date' );
+		$status     = filter_input( INPUT_POST, 'status' );
+		$nonce      = filter_input( INPUT_POST, self::SLUG . '-nonce' );
+
+		$report     = null;
+
+		if ( 'run-report' === $action && wp_verify_nonce( $nonce, 'run-report' ) ) {
+			$report = new self( $start_date, $end_date, $status );
+		}
+
+		include Reports\get_views_dir_path() . 'report/wordcamp-status.php';
 	}
 }
