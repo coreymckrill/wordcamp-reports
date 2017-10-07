@@ -14,6 +14,7 @@ use WordCamp\Reports\Report;
 /** @var string $end_date */
 /** @var string $status */
 /** @var Report\WordCamp_Status|null $report */
+/** @var \WP_Error|null $error */
 ?>
 
 <div class="wrap">
@@ -58,7 +59,14 @@ use WordCamp\Reports\Report;
 		<?php submit_button( 'Submit', 'primary' ); ?>
 	</form>
 
-	<?php if ( $report instanceof Report\WordCamp_Status ) : ?>
+	<?php if ( $error instanceof \WP_Error ) : ?>
+		<div class="notice notice-error">
+			<p>
+				Error:
+				<?php echo wp_kses_post( $error->get_error_message() ); ?>
+			</p>
+		</div>
+	<?php elseif ( $report instanceof Report\WordCamp_Status ) : ?>
 		<?php $report->render_html(); ?>
 	<?php endif; ?>
 </div>

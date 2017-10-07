@@ -341,10 +341,15 @@ class WordCamp_Status extends Base {
 		$status     = filter_input( INPUT_POST, 'status' );
 		$nonce      = filter_input( INPUT_POST, self::SLUG . '-nonce' );
 
-		$report     = null;
+		$report = null;
+		$error  = null;
 
 		if ( 'run-report' === $action && wp_verify_nonce( $nonce, 'run-report' ) ) {
-			$report = new self( $start_date, $end_date, $status );
+			if ( ! strtotime( $start_date ) || ! strtotime( $end_date ) ) {
+				$error = new \WP_Error( 'missing_parameter', 'Please enter valid start and end dates.' );
+			} else {
+				$report = new self( $start_date, $end_date, $status );
+			}
 		}
 
 		include Reports\get_views_dir_path() . 'report/wordcamp-status.php';

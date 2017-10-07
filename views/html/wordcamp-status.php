@@ -12,7 +12,6 @@ defined( 'WPINC' ) || die();
 /** @var array $active_camps */
 /** @var array $inactive_camps */
 /** @var array $statuses */
-
 ?>
 
 <?php if ( ! empty( $active_camps ) ) : ?>
