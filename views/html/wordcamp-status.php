@@ -29,7 +29,7 @@ defined( 'WPINC' ) || die();
 		<ul>
 			<?php foreach ( $active_camp['logs'] as $log ) : ?>
 				<li><?php
-				echo date( 'Y-m-d H:i:s', $log['timestamp'] );
+				echo date( 'Y-m-d', $log['timestamp'] );
 				echo ': ';
 				echo esc_html( $log['message'] );
 				?></li>
@@ -52,7 +52,7 @@ defined( 'WPINC' ) || die();
 		<li>
 			<strong><?php echo esc_html( $inactive_camp['name'] ); ?></strong> &ndash;
 			<?php echo esc_html( $statuses[ $inactive_camp['latest_status'] ] ); ?> &ndash;
-			<em>Last activity: <?php echo date( 'Y-m-d H:i:s', $inactive_camp['latest_log']['timestamp'] ); ?></em>
+			<em>Last activity: <?php echo date( 'Y-m-d', $inactive_camp['latest_log']['timestamp'] ); ?></em>
 		</li>
 	<?php endforeach; ?>
 	</ul>
