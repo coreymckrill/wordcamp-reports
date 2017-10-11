@@ -45,7 +45,7 @@ use WordCamp\Reports\Report;
 					<th scope="row"><label for="status">Status</label></th>
 					<td>
 						<select id="status" name="status">
-							<option value=""<?php selected( null, $status ); ?>>Any</option>
+							<option value="any"<?php selected( ( ! $status || 'any' === $status ) ); ?>>Any</option>
 							<?php foreach ( $statuses as $value => $label ) : ?>
 								<option value="<?php echo esc_attr( $value ); ?>"<?php selected( $value, $status ); ?>><?php echo esc_attr( $label ); ?></option>
 							<?php endforeach; ?>

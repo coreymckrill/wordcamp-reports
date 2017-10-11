@@ -114,6 +114,10 @@ class WordCamp_Status extends Base {
 			}
 		}
 
+		if ( 'any' === $status ) {
+			$status = '';
+		}
+
 		if ( $status && $this->validate_status_input( $status ) ) {
 			$this->status = $status;
 		}
