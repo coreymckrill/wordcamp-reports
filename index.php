@@ -149,3 +149,20 @@ function get_page_url( $report_slug = '' ) {
 
 	return $url;
 }
+
+/**
+ * Register shortcodes for reports that have a public interface.
+ *
+ * @return void
+ */
+function register_shortcodes() {
+	$report_classes = get_report_classes();
+
+	foreach ( $report_classes as $class ) {
+		if ( method_exists( $class, 'handle_shortcode' ) && $class::SHORTCODE_TAG ) {
+			add_shortcode( $class::SHORTCODE_TAG, array( $class, 'handle_shortcode' ) );
+		}
+	}
+}
+
+add_action( 'plugins_loaded', __NAMESPACE__ . '\register_shortcodes' );

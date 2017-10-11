@@ -30,46 +30,176 @@ class WordCamp_Status extends Base {
 	const DESCRIPTION = 'A summary of WordCamp status changes during a given time period.';
 
 	/**
+	 * Shortcode tag for outputting the public report form.
+	 */
+	const SHORTCODE_TAG = 'wordcamp_status_report';
+
+	/**
 	 * The start of the date range for the report.
 	 *
 	 * @var \DateTime|null
 	 */
-	protected $start_date = null;
+	public $start_date = null;
 
 	/**
 	 * The end of the date range for the report.
 	 *
 	 * @var \DateTime|null
 	 */
-	protected $end_date = null;
+	public $end_date = null;
 
 	/**
 	 * The status to filter for in the report.
 	 *
 	 * @var string
 	 */
-	protected $status = '';
+	public $status = '';
+
+	/**
+	 * Additional report parameters.
+	 *
+	 * @var array
+	 */
+	public $options = array();
+
+	/**
+	 * A container object to hold error messages.
+	 *
+	 * @var \WP_Error
+	 */
+	public $error = null;
 
 	/**
 	 * WordCamp_Status constructor.
 	 *
-	 * @param \DateTime $start_date The start of the date range for the report.
-	 * @param \DateTime $end_date   The end of the date range for the report.
-	 * @param string    $status     Optional. The status to filter for in the report.
+	 * @param string        $start_date The start of the date range for the report.
+	 * @param string        $end_date   The end of the date range for the report.
+	 * @param string        $status     Optional. The status ID to filter for in the report.
+	 * @param array         $options    {
+	 *     Optional. Additional report parameters.
+	 *
+	 *     @type \DateTime     $earliest_start The earliest date that can be used for the start of the date range.
+	 *     @type \DateInterval $max_interval   The max interval of time between the start and end dates.
+	 *     @type array         $status_subset  A list of valid status IDs.
+	 *     @type bool          $cache_data     True to look for cached data and cache the generated data set.
+	 * }
 	 */
-	public function __construct( $start_date, $end_date, $status = '' ) {
-		$this->start_date = new \DateTime( $start_date );
-		$this->end_date   = new \DateTime( $end_date );
+	public function __construct( $start_date, $end_date, $status = '', array $options = array() ) {
+		$this->error = new \WP_Error();
 
-		// If the end date doesn't have a specific time, make sure
-		// the entire day is included.
-		if ( '00:00:00' === $this->end_date->format( 'H:i:s' ) ) {
-			$this->end_date->setTime( 23, 59, 59 );
+		$this->options = wp_parse_args( $options, array(
+			'earliest_start' => null,
+			'max_interval'   => null,
+			'status_subset'  => array(),
+			'cache_data'     => true,
+		) );
+
+		if ( $this->validate_date_range_inputs( $start_date, $end_date ) ) {
+			$this->start_date = new \DateTime( $start_date );
+			$this->end_date   = new \DateTime( $end_date );
+
+			// If the end date doesn't have a specific time, make sure
+			// the entire day is included.
+			if ( '00:00:00' === $this->end_date->format( 'H:i:s' ) ) {
+				$this->end_date->setTime( 23, 59, 59 );
+			}
 		}
 
-		if ( array_key_exists( $status, self::get_all_statuses() ) ) {
+		if ( $status && $this->validate_status_input( $status ) ) {
 			$this->status = $status;
 		}
+	}
+
+	/**
+	 * Validate the given strings for the start and end dates.
+	 *
+	 * @param string $start_date The start of the date range for the report.
+	 * @param string $end_date   The end of the date range for the report.
+	 *
+	 * @return bool True if the parameters are valid. Otherwise false.
+	 */
+	protected function validate_date_range_inputs( $start_date, $end_date ) {
+		if ( ! $start_date || ! $end_date ) {
+			$this->error->add( 'invalid_date', 'Please enter a valid start and end date.' );
+
+			return false;
+		}
+
+		try {
+			$start_date = new \DateTimeImmutable( $start_date ); // Immutable so methods don't modify the original object.
+		} catch ( \Exception $e ) {
+			$this->error->add( 'invalid_date', 'Please enter a valid start date.' );
+
+			return false;
+		}
+
+		// Check for start date boundary.
+		if ( $this->options['earliest_start'] instanceof \DateTime && $start_date < $this->options['earliest_start'] ) {
+			$this->error->add( 'start_date_too_old', sprintf(
+				'Please enter a start date of %s or later.',
+				$this->options['earliest_start']->format( 'Y-m-d' )
+			) );
+
+			return false;
+		}
+
+		try {
+			$end_date = new \DateTimeImmutable( $end_date ); // Immutable so methods don't modify the original object.
+		} catch ( \Exception $e ) {
+			$this->error->add( 'invalid_date', 'Please enter a valid end date.' );
+
+			return false;
+		}
+
+		// No negative date intervals.
+		if ( $start_date > $end_date ) {
+			$this->error->add( 'negative_date_interval', 'Please enter an end date that is the same as or after the start date.' );
+
+			return false;
+		}
+
+		// Check for date interval boundary.
+		if ( $this->options['max_interval'] instanceof \DateInterval ) {
+			$max_end_date = $start_date->add( $this->options['max_interval'] );
+
+			if ( $end_date > $max_end_date ) {
+				$this->error->add( 'exceeds_max_date_interval', sprintf(
+					'Please enter an end date that is no more than %s days after the start date.',
+					$start_date->diff( $max_end_date )->format( '%a' )
+				) );
+
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * Validate the given status ID string.
+	 *
+	 * @param string $status The status ID to filter for in the report.
+	 *
+	 * @return bool True if the status ID is valid. Otherwise false.
+	 */
+	protected function validate_status_input( $status ) {
+		if ( is_array( $this->options['status_subset'] ) && ! empty( $this->options['status_subset'] ) ) {
+			if ( ! in_array( $status, $this->options['status_subset'], true ) ) {
+				$this->error->add( 'invalid_status', 'Please enter a valid status ID.' );
+
+				return false;
+			}
+
+			return true;
+		}
+
+		if ( ! in_array( $status, array_keys( self::get_all_statuses() ), true ) ) {
+			$this->error->add( 'invalid_status', 'Please enter a valid status ID.' );
+
+			return false;
+		}
+
+		return true;
 	}
 
 	/**
@@ -86,12 +216,43 @@ class WordCamp_Status extends Base {
 	}
 
 	/**
+	 * Generate a cache key based on the input parameters.
+	 *
+	 * @return string
+	 */
+	protected function get_cache_key() {
+		$cache_key = self::SLUG . '_' . $this->start_date->getTimestamp() . '-' . $this->end_date->getTimestamp();
+
+		if ( $this->status ) {
+			$cache_key .= '_' . $this->status;
+		}
+
+		return $cache_key;
+	}
+
+	/**
 	 * Query, parse, and compile the data for the report.
 	 *
 	 * @return array
 	 */
 	public function get_data() {
-		\add_filter( 'locale', array( $this, 'set_locale_to_en_US' ) );
+		// Bail if there are errors.
+		if ( ! empty( $this->error->get_error_messages() ) ) {
+			return array();
+		}
+
+		// Maybe check the cache.
+		if ( false !== $this->options['cache_data'] ) {
+			$cache_key = $this->get_cache_key();
+			$data      = get_transient( $cache_key );
+
+			if ( is_array( $data ) ) {
+				return $data;
+			}
+		}
+
+		// Ensure status labels can match status log messages.
+		add_filter( 'locale', array( $this, 'set_locale_to_en_US' ) );
 
 		$wordcamp_posts = $this->get_wordcamp_posts();
 		$statuses       = self::get_all_statuses();
@@ -143,8 +304,8 @@ class WordCamp_Status extends Base {
 				}
 			}
 
-			if ( $site_id = \get_wordcamp_site_id( $wordcamp ) ) {
-				$name = \get_wordcamp_name( $site_id );
+			if ( $site_id = get_wordcamp_site_id( $wordcamp ) ) {
+				$name = get_wordcamp_name( $site_id );
 			} else {
 				$name = get_the_title( $wordcamp );
 			}
@@ -157,7 +318,21 @@ class WordCamp_Status extends Base {
 			);
 		}
 
-		\remove_filter( 'locale', array( $this, 'set_locale_to_en_US' ) );
+		// Remove the temporary locale change.
+		remove_filter( 'locale', array( $this, 'set_locale_to_en_US' ) );
+
+		// Maybe cache the data.
+		if ( false !== $this->options['cache_data'] ) {
+			$cache_key  = $this->get_cache_key();
+			$expiration = DAY_IN_SECONDS;
+
+			// Expire the cache sooner if the data includes the current day.
+			if ( date_create( 'now' )->format( 'Y-m-d' ) === $this->end_date->format( 'Y-m-d' ) ) {
+				$expiration = HOUR_IN_SECONDS;
+			}
+
+			set_transient( $cache_key, $data, $expiration );
+		}
 
 		return $data;
 	}
@@ -177,7 +352,6 @@ class WordCamp_Status extends Base {
 			'ignore_sticky_posts' => true,
 			'orderby'             => 'date',
 			'order'               => 'ASC',
-			// Don't include WordCamps that happened more than 3 months ago.
 			'meta_query'          => array(
 				'relation' => 'OR',
 				array(
@@ -190,6 +364,7 @@ class WordCamp_Status extends Base {
 					'value'   => '',
 				),
 				array(
+					// Don't include WordCamps that happened more than 3 months ago.
 					'key'     => 'Start Date (YYYY-mm-dd)',
 					'compare' => '>=',
 					'value'   => strtotime( '-3 months', $this->start_date->getTimestamp() ),
@@ -198,7 +373,7 @@ class WordCamp_Status extends Base {
 			),
 		);
 
-		return \get_posts( $post_args );
+		return get_posts( $post_args );
 	}
 
 	/**
@@ -209,7 +384,7 @@ class WordCamp_Status extends Base {
 	 * @return array
 	 */
 	protected function get_wordcamp_status_logs( \WP_Post $wordcamp ) {
-		$log_entries = \get_post_meta( $wordcamp->ID, '_status_change' );
+		$log_entries = get_post_meta( $wordcamp->ID, '_status_change' );
 
 		if ( ! empty( $log_entries ) ) {
 			// Sort log entries in chronological order.
@@ -301,7 +476,6 @@ class WordCamp_Status extends Base {
 	 */
 	public function render_html() {
 		$data       = $this->get_data();
-
 		$start_date = $this->start_date;
 		$end_date   = $this->end_date;
 		$status     = $this->status;
@@ -324,7 +498,17 @@ class WordCamp_Status extends Base {
 
 		$statuses = self::get_all_statuses();
 
-		include Reports\get_views_dir_path() . 'html/wordcamp-status.php';
+		if ( ! empty( $this->error->get_error_messages() ) ) {
+			?>
+			<div class="notice notice-error">
+				<?php foreach ( $this->error->get_error_messages() as $message ) : ?>
+					<?php echo wpautop( wp_kses_post( $message ) ); ?>
+				<?php endforeach; ?>
+			</div>
+		<?php
+		} else {
+			include Reports\get_views_dir_path() . 'html/wordcamp-status.php';
+		}
 	}
 
 	/**
@@ -333,25 +517,62 @@ class WordCamp_Status extends Base {
 	 * @return void
 	 */
 	public static function render_admin_page() {
-		$statuses = self::get_all_statuses();
-
-		$action     = filter_input( INPUT_POST, 'action' );
 		$start_date = filter_input( INPUT_POST, 'start-date' );
 		$end_date   = filter_input( INPUT_POST, 'end-date' );
 		$status     = filter_input( INPUT_POST, 'status' );
+		$action     = filter_input( INPUT_POST, 'action' );
 		$nonce      = filter_input( INPUT_POST, self::SLUG . '-nonce' );
+		$statuses   = self::get_all_statuses();
 
 		$report = null;
-		$error  = null;
 
 		if ( 'run-report' === $action && wp_verify_nonce( $nonce, 'run-report' ) ) {
-			if ( ! strtotime( $start_date ) || ! strtotime( $end_date ) ) {
-				$error = new \WP_Error( 'missing_parameter', 'Please enter valid start and end dates.' );
-			} else {
-				$report = new self( $start_date, $end_date, $status );
-			}
+			$options = array(
+				'earliest_start' => new \DateTime( '2007-11-17' ), // Date of first WordCamp in the system.
+				'cache_data'     => false,
+			);
+
+			$report = new self( $start_date, $end_date, $status, $options );
 		}
 
 		include Reports\get_views_dir_path() . 'report/wordcamp-status.php';
+	}
+
+	/**
+	 * Determine whether to render the public report form.
+	 *
+	 * @todo Add front end styles.
+	 * @todo Maybe restrict this form to logged in users?
+	 */
+	public static function handle_shortcode() {
+		if ( 'page' === get_post_type() ) {
+			self::render_public_page();
+		}
+	}
+
+	/**
+	 * Render the page for this report on the front end.
+	 *
+	 * @return void
+	 */
+	public static function render_public_page() {
+		$start_date = filter_input( INPUT_GET, 'start-date' );
+		$end_date   = filter_input( INPUT_GET, 'end-date' );
+		$status     = filter_input( INPUT_GET, 'status' );
+		$action     = filter_input( INPUT_GET, 'action' );
+		$statuses   = self::get_all_statuses();
+
+		$report = null;
+
+		if ( 'run-report' === $action ) {
+			$options = array(
+				'earliest_start' => new \DateTime( '2007-11-17' ), // Date of first WordCamp in the system.
+				'max_interval'   => new \DateInterval( 'P1Y' ), // 1 year. See http://php.net/manual/en/dateinterval.construct.php.
+			);
+
+			$report = new self( $start_date, $end_date, $status, $options );
+		}
+
+		include Reports\get_views_dir_path() . 'public/wordcamp-status.php';
 	}
 }

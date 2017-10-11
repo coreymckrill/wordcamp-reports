@@ -21,7 +21,11 @@ defined( 'WPINC' ) || die();
 		<?php else : ?>
 			WordCamp activity
 		<?php endif; ?>
-		between <?php echo esc_html( $start_date->format( 'M jS, Y' ) ); ?> and <?php echo esc_html( $end_date->format( 'M jS, Y' ) ); ?>
+		<?php if ( $start_date->format( 'Y-m-d' ) === $end_date->format( 'Y-m-d' ) ) : ?>
+			on <?php echo esc_html( $start_date->format( 'M jS, Y' ) ); ?>
+		<?php else : ?>
+			between <?php echo esc_html( $start_date->format( 'M jS, Y' ) ); ?> and <?php echo esc_html( $end_date->format( 'M jS, Y' ) ); ?>
+		<?php endif; ?>
 	</h3>
 
 	<?php foreach ( $active_camps as $active_camp ) : ?>
@@ -44,7 +48,12 @@ defined( 'WPINC' ) || die();
 		<?php if ( $status ) : ?>
 			set to &ldquo;<?php echo esc_html( $statuses[ $status ] ); ?>&rdquo;
 		<?php endif; ?>
-		with no activity between <?php echo esc_html( $start_date->format( 'M jS, Y' ) ); ?> and <?php echo esc_html( $end_date->format( 'M jS, Y' ) ); ?>
+		with no activity
+		<?php if ( $start_date->format( 'Y-m-d' ) === $end_date->format( 'Y-m-d' ) ) : ?>
+			on <?php echo esc_html( $start_date->format( 'M jS, Y' ) ); ?>
+		<?php else : ?>
+			between <?php echo esc_html( $start_date->format( 'M jS, Y' ) ); ?> and <?php echo esc_html( $end_date->format( 'M jS, Y' ) ); ?>
+		<?php endif; ?>
 	</h3>
 
 	<ul>
@@ -64,6 +73,10 @@ defined( 'WPINC' ) || die();
 		<?php if ( $status ) : ?>
 			involving &ldquo;<?php echo esc_html( $statuses[ $status ] ); ?>&rdquo;
 		<?php endif; ?>
-		for the time between <?php echo esc_html( $start_date->format( 'M jS, Y' ) ); ?> and <?php echo esc_html( $end_date->format( 'M jS, Y' ) ); ?>
+		<?php if ( $start_date->format( 'Y-m-d' ) === $end_date->format( 'Y-m-d' ) ) : ?>
+			on <?php echo esc_html( $start_date->format( 'M jS, Y' ) ); ?>
+		<?php else : ?>
+			between <?php echo esc_html( $start_date->format( 'M jS, Y' ) ); ?> and <?php echo esc_html( $end_date->format( 'M jS, Y' ) ); ?>
+		<?php endif; ?>
 	</h3>
 <?php endif; ?>

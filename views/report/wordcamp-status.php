@@ -9,12 +9,11 @@ defined( 'WPINC' ) || die();
 use WordCamp\Reports;
 use WordCamp\Reports\Report;
 
-/** @var array  $statuses */
 /** @var string $start_date */
 /** @var string $end_date */
 /** @var string $status */
+/** @var array  $statuses */
 /** @var Report\WordCamp_Status|null $report */
-/** @var \WP_Error|null $error */
 ?>
 
 <div class="wrap">
@@ -56,17 +55,10 @@ use WordCamp\Reports\Report;
 			</tbody>
 		</table>
 
-		<?php submit_button( 'Submit', 'primary' ); ?>
+		<?php submit_button( 'Submit', 'primary', '' ); ?>
 	</form>
 
-	<?php if ( $error instanceof \WP_Error ) : ?>
-		<div class="notice notice-error">
-			<p>
-				Error:
-				<?php echo wp_kses_post( $error->get_error_message() ); ?>
-			</p>
-		</div>
-	<?php elseif ( $report instanceof Report\WordCamp_Status ) : ?>
+	<?php if ( $report instanceof Report\WordCamp_Status ) : ?>
 		<?php $report->render_html(); ?>
 	<?php endif; ?>
 </div>
