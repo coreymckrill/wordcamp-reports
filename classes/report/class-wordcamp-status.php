@@ -97,6 +97,16 @@ class WordCamp_Status extends Base {
 		if ( $this->validate_date_range_inputs( $start_date, $end_date ) ) {
 			$this->start_date = new \DateTime( $start_date );
 			$this->end_date   = new \DateTime( $end_date );
+			$now              = new \DateTime( 'now' );
+
+			// If the end date is in the future, limit it to the end of the current month.
+			if ( $this->end_date > $now && $this->end_date->format( 'Y-m' ) !== $now->format( 'Y-m' ) ) {
+				$this->end_date->setDate(
+					intval( $now->format( 'Y' ) ),
+					intval( $now->format( 'm' ) ),
+					intval( $now->format( 't' ) )
+				);
+			}
 
 			// If the end date doesn't have a specific time, make sure
 			// the entire day is included.
@@ -327,7 +337,7 @@ class WordCamp_Status extends Base {
 			$expiration = DAY_IN_SECONDS;
 
 			// Expire the cache sooner if the data includes the current day.
-			if ( date_create( 'now' )->format( 'Y-m-d' ) === $this->end_date->format( 'Y-m-d' ) ) {
+			if ( $this->end_date >= date_create( 'now' ) ) {
 				$expiration = HOUR_IN_SECONDS;
 			}
 
@@ -533,6 +543,11 @@ class WordCamp_Status extends Base {
 			);
 
 			$report = new self( $start_date, $end_date, $status, $options );
+
+			// The report adjusts end dates in the future to within the same month as the current date.
+			if ( empty( $report->error->get_error_messages() ) ) {
+				$end_date = $report->end_date->format( 'Y-m-d' );
+			}
 		}
 
 		include Reports\get_views_dir_path() . 'report/wordcamp-status.php';
@@ -571,6 +586,11 @@ class WordCamp_Status extends Base {
 			);
 
 			$report = new self( $start_date, $end_date, $status, $options );
+
+			// The report adjusts end dates in the future to within the same month as the current date.
+			if ( empty( $report->error->get_error_messages() ) ) {
+				$end_date = $report->end_date->format( 'Y-m-d' );
+			}
 		}
 
 		include Reports\get_views_dir_path() . 'public/wordcamp-status.php';
