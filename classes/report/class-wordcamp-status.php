@@ -234,7 +234,7 @@ class WordCamp_Status extends Base {
 	 * @return string
 	 */
 	protected function get_cache_key() {
-		$cache_key = self::SLUG . '_' . $this->start_date->getTimestamp() . '-' . $this->end_date->getTimestamp();
+		$cache_key = 'report_' . self::SLUG . '_' . $this->start_date->getTimestamp() . '-' . $this->end_date->getTimestamp();
 
 		if ( $this->status ) {
 			$cache_key .= '_' . $this->status;
