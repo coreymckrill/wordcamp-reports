@@ -97,15 +97,14 @@ class WordCamp_Status extends Base {
 		if ( $this->validate_date_range_inputs( $start_date, $end_date ) ) {
 			$this->start_date = new \DateTime( $start_date );
 			$this->end_date   = new \DateTime( $end_date );
-			$now              = new \DateTime( 'now' );
+			$now              = new \DateTimeImmutable( 'now' );
 
-			// If the end date is in the future, limit it to the end of the current month.
-			if ( $this->end_date > $now && $this->end_date->format( 'Y-m' ) !== $now->format( 'Y-m' ) ) {
-				$this->end_date->setDate(
-					intval( $now->format( 'Y' ) ),
-					intval( $now->format( 'm' ) ),
-					intval( $now->format( 't' ) )
-				);
+			// If the end date is more than a month in the future, limit it to the end of the current year.
+			// This allows for a date range spanning Dec/Jan, but not an arbitrary date far in the future.
+			if ( $this->end_date > $now &&
+			     $now->diff( $this->end_date, true )->days > 31 &&
+			     $this->end_date->format( 'Y' ) !== $now->format( 'Y' ) ) {
+				$this->end_date->setDate( intval( $now->format( 'Y' ) ), 12, 31 );
 			}
 
 			// If the end date doesn't have a specific time, make sure
@@ -544,7 +543,7 @@ class WordCamp_Status extends Base {
 
 			$report = new self( $start_date, $end_date, $status, $options );
 
-			// The report adjusts end dates in the future to within the same month as the current date.
+			// The report adjusts the end date in some circumstances.
 			if ( empty( $report->error->get_error_messages() ) ) {
 				$end_date = $report->end_date->format( 'Y-m-d' );
 			}
@@ -587,7 +586,7 @@ class WordCamp_Status extends Base {
 
 			$report = new self( $start_date, $end_date, $status, $options );
 
-			// The report adjusts end dates in the future to within the same month as the current date.
+			// The report adjusts the end date in some circumstances.
 			if ( empty( $report->error->get_error_messages() ) ) {
 				$end_date = $report->end_date->format( 'Y-m-d' );
 			}
