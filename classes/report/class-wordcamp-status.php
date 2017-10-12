@@ -525,6 +525,32 @@ class WordCamp_Status extends Base {
 	}
 
 	/**
+	 * Register all assets used by this report.
+	 *
+	 * @return void
+	 */
+	protected static function register_assets() {
+		wp_register_script(
+			self::SLUG,
+			Reports\get_assets_url() . 'js/' . self::SLUG . '.js',
+			array( 'jquery' ),
+			Reports\JS_VERSION,
+			true
+		);
+	}
+
+	/**
+	 * Enqueue JS and CSS assets for this report's admin interface.
+	 *
+	 * @return void
+	 */
+	public static function enqueue_admin_assets() {
+		self::register_assets();
+
+		wp_enqueue_script( self::SLUG );
+	}
+
+	/**
 	 * Render the page for this report in the WP Admin.
 	 *
 	 * @return void

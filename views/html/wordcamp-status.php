@@ -15,7 +15,7 @@ defined( 'WPINC' ) || die();
 ?>
 
 <?php if ( ! empty( $active_camps ) ) : ?>
-	<h3>
+	<h3 id="active-heading">
 		<?php if ( $status ) : ?>
 			WordCamps set to &ldquo;<?php echo esc_html( $statuses[ $status ] ); ?>&rdquo;
 		<?php else : ?>
@@ -29,8 +29,8 @@ defined( 'WPINC' ) || die();
 	</h3>
 
 	<?php foreach ( $active_camps as $active_camp ) : ?>
-		<h4><?php echo esc_html( $active_camp['name'] ); ?> &ndash; <?php echo esc_html( $statuses[ $active_camp['latest_status'] ] ); ?></h4>
-		<ul>
+		<p><strong class="active-camp"><?php echo esc_html( $active_camp['name'] ); ?></strong> &ndash; <?php echo esc_html( $statuses[ $active_camp['latest_status'] ] ); ?></p>
+		<ul class="status-log ul-disc">
 			<?php foreach ( $active_camp['logs'] as $log ) : ?>
 				<li><?php
 				echo date( 'Y-m-d', $log['timestamp'] );
@@ -43,7 +43,7 @@ defined( 'WPINC' ) || die();
 <?php endif; ?>
 
 <?php if ( ! empty( $inactive_camps ) ) : ?>
-	<h3>
+	<h3 id="inactive-heading">
 		WordCamps
 		<?php if ( $status ) : ?>
 			set to &ldquo;<?php echo esc_html( $statuses[ $status ] ); ?>&rdquo;
@@ -59,7 +59,7 @@ defined( 'WPINC' ) || die();
 	<ul>
 	<?php foreach ( $inactive_camps as $inactive_camp ) : ?>
 		<li>
-			<strong><?php echo esc_html( $inactive_camp['name'] ); ?></strong> &ndash;
+			<strong class="inactive-camp"><?php echo esc_html( $inactive_camp['name'] ); ?></strong> &ndash;
 			<?php echo esc_html( $statuses[ $inactive_camp['latest_status'] ] ); ?> &ndash;
 			<em>Last activity: <?php echo date( 'Y-m-d', $inactive_camp['latest_log']['timestamp'] ); ?></em>
 		</li>
@@ -68,7 +68,7 @@ defined( 'WPINC' ) || die();
 <?php endif; ?>
 
 <?php if ( empty( $active_camps ) && empty( $inactive_camps ) ) : ?>
-	<h3>
+	<h3 id="no-data-heading">
 		No data
 		<?php if ( $status ) : ?>
 			involving &ldquo;<?php echo esc_html( $statuses[ $status ] ); ?>&rdquo;

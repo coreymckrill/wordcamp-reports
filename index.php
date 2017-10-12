@@ -13,6 +13,8 @@
 namespace WordCamp\Reports;
 defined( 'WPINC' ) || die();
 
+use WordCamp\Reports\Report;
+
 const JS_VERSION  = 1;
 const CSS_VERSION = 1;
 
@@ -35,6 +37,15 @@ function get_classes_dir_path() {
  */
 function get_views_dir_path() {
 	return trailingslashit( PLUGIN_DIR ) . 'views/';
+}
+
+/**
+ * Get the URL for the assets directory.
+ *
+ * @return string URL with trailing slash.
+ */
+function get_assets_url() {
+	return trailingslashit( PLUGIN_URL ) . 'assets/';
 }
 
 /**
@@ -117,7 +128,44 @@ add_action( 'admin_menu', __NAMESPACE__ . '\add_reports_page' );
  * @return void
  */
 function render_page() {
-	$report = filter_input( INPUT_GET, 'report', FILTER_SANITIZE_STRING );
+	$report       = filter_input( INPUT_GET, 'report', FILTER_SANITIZE_STRING );
+	$report_class = get_report_class_by_slug( $report );
+
+	if ( ! is_null( $report_class ) ) {
+		$report_class::render_admin_page();
+	} else {
+		include get_views_dir_path() . 'admin.php';
+	}
+}
+
+/**
+ * Enqueue JS and CSS assets for a particular report's admin interface, if it has any.
+ *
+ * @param string $hook_suffix The ID of the current admin page.
+ */
+function enqueue_admin_assets( $hook_suffix ) {
+	if ( 'dashboard_page_wordcamp-reports' !== $hook_suffix ) {
+		return;
+	}
+
+	$report       = filter_input( INPUT_GET, 'report', FILTER_SANITIZE_STRING );
+	$report_class = get_report_class_by_slug( $report );
+
+	if ( ! is_null( $report_class ) && method_exists( $report_class, 'enqueue_admin_assets' ) ) {
+		$report_class::enqueue_admin_assets();
+	}
+}
+
+add_action( 'admin_enqueue_scripts', __NAMESPACE__ . '\enqueue_admin_assets' );
+
+/**
+ * Determine the class used for a report based on a given string ID.
+ *
+ * @param string $report_slug String identifying a particular report class.
+ *
+ * @return Report\Base|null
+ */
+function get_report_class_by_slug( $report_slug ) {
 	$report_classes = get_report_classes();
 
 	$report_slugs = array_map( function( $class ) {
@@ -126,11 +174,11 @@ function render_page() {
 
 	$reports = array_combine( $report_slugs, $report_classes );
 
-	if ( in_array( $report, $report_slugs, true ) ) {
-		$reports[ $report ]::render_admin_page();
-	} else {
-		include get_views_dir_path() . 'admin.php';
+	if ( isset( $reports[ $report_slug ] ) ) {
+		return $reports[ $report_slug ];
 	}
+
+	return null;
 }
 
 /**
