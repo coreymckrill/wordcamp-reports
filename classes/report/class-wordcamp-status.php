@@ -537,6 +537,14 @@ class WordCamp_Status extends Base {
 			Reports\JS_VERSION,
 			true
 		);
+
+		wp_register_style(
+			self::SLUG,
+			Reports\get_assets_url() . 'css/' . self::SLUG . '.css',
+			array(),
+			Reports\CSS_VERSION,
+			'screen'
+		);
 	}
 
 	/**
@@ -548,6 +556,7 @@ class WordCamp_Status extends Base {
 		self::register_assets();
 
 		wp_enqueue_script( self::SLUG );
+		wp_enqueue_style( self::SLUG );
 	}
 
 	/**

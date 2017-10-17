@@ -35,16 +35,24 @@
 			if ( $logs.length ) {
 				$logs.each( function() {
 					var $button = $( '<button>' )
-						.data( {
-							status: 'visible',
-							showLabel: 'Show Details',
-							hideLabel: 'Hide details'
-						} )
-						.on( 'click', self.toggleDetails )
+							.addClass( 'status-log-toggle' )
+							.data( {
+								status: 'visible',
+								showLabel: 'Show Details',
+								hideLabel: 'Hide details'
+							} )
+							.on( 'click', self.toggleDetails ),
+						$icon = $( '<span>' )
+							.addClass( 'status-log-toggle-icon dashicons dashicons-arrow-down' )
+							.attr( 'aria-hidden', true ),
+						$label = $( '<span>' )
+							.addClass( 'status-log-toggle-label screen-reader-text' )
+							.text( $button.data( 'hideLabel' ) )
 					;
 
 					$button
-						.text( $button.data( 'hideLabel' ) )
+						.append( $icon )
+						.append( $label )
 						.appendTo( $( this ).prev( 'p' ) )
 					;
 
@@ -62,22 +70,22 @@
 			e.preventDefault();
 
 			var $button = $( e.target ),
+				$icon = $button.find( '.status-log-toggle-icon' ),
+				$label = $button.find( '.status-log-toggle-label' ),
 				$log = $button.parent().next( '.status-log' );
 
 			if ( $log.is( ':visible' ) ) {
 				// Currently visible. Hide.
 				$log.hide();
-				$button
-					.text( $button.data( 'showLabel' ) )
-					.data( 'status', 'hidden' )
-				;
+				$icon.removeClass( 'dashicons-arrow-up' ).addClass( 'dashicons-arrow-down' );
+				$label.text( $button.data( 'showLabel' ) );
+				$button.data( 'status', 'hidden' );
 			} else {
 				// Currently hidden. Show.
 				$log.show();
-				$button
-					.text( $button.data( 'hideLabel' ) )
-					.data( 'status', 'visible' )
-				;
+				$icon.removeClass( 'dashicons-arrow-down' ).addClass( 'dashicons-arrow-up' );
+				$label.text( $button.data( 'hideLabel' ) );
+				$button.data( 'status', 'visible' );
 			}
 		},
 
@@ -90,17 +98,17 @@
 				$bar;
 
 			if ( $activeheading.length ) {
-				$bar = $( '<div>' ).insertAfter( $activeheading );
+				$bar = $( '<div>' ).attr( 'id', 'status-log-bulk-bar' ).insertAfter( $activeheading );
 
 				self.cache.$showAll = $( '<button>' )
-					.addClass( 'button' )
+					.addClass( 'button status-log-bulk-toggle' )
 					.text( 'Show all details' )
 					.on( 'click', self.showAll )
 					.appendTo( $bar )
 				;
 
 				self.cache.$hideAll = $( '<button>' )
-					.addClass( 'button' )
+					.addClass( 'button status-log-bulk-toggle' )
 					.text( 'Hide all details' )
 					.on( 'click', self.hideAll )
 					.appendTo( $bar )
