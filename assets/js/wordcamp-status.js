@@ -35,7 +35,7 @@
 			if ( $logs.length ) {
 				$logs.each( function() {
 					var $button = $( '<button>' )
-							.addClass( 'status-log-toggle' )
+							.addClass( 'report-button status-log-toggle' )
 							.data( {
 								status: 'visible',
 								showLabel: 'Show Details',
@@ -98,17 +98,21 @@
 				$bar;
 
 			if ( $activeheading.length ) {
-				$bar = $( '<div>' ).attr( 'id', 'status-log-bulk-bar' ).insertAfter( $activeheading );
+				$bar = $( '<div>' )
+					.attr( 'id', 'status-log-bulk-bar' )
+					.addClass( 'report-results-control-bar' )
+					.insertAfter( $activeheading )
+				;
 
 				self.cache.$showAll = $( '<button>' )
-					.addClass( 'button status-log-bulk-toggle' )
+					.addClass( 'button report-button status-log-bulk-toggle-show' )
 					.text( 'Show all details' )
 					.on( 'click', self.showAll )
 					.appendTo( $bar )
 				;
 
 				self.cache.$hideAll = $( '<button>' )
-					.addClass( 'button status-log-bulk-toggle' )
+					.addClass( 'button report-button status-log-bulk-toggle-hide' )
 					.text( 'Hide all details' )
 					.on( 'click', self.hideAll )
 					.appendTo( $bar )

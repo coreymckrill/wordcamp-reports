@@ -594,13 +594,41 @@ class WordCamp_Status extends Base {
 	/**
 	 * Determine whether to render the public report form.
 	 *
-	 * @todo Add front end styles.
+	 * This shortcode is limited to use on pages.
+	 *
 	 * @todo Maybe restrict this form to logged in users?
+	 *
+	 * @param array $attr {
+	 *     Attributes of the wordcamp_status_report shortcode.
+	 *
+	 *     @type bool grunion_styles Enqueue styles from Jetpack's Contact Form for use with this report form.
+	 *                               Default true.
+	 * }
+	 *
+	 * @return string HTML content to display shortcode.
 	 */
-	public static function handle_shortcode() {
+	public static function handle_shortcode( $attr ) {
+		$html = '';
+
+		$atts = shortcode_atts( array(
+			'grunion_styles' => true,
+		), $attr, self::SHORTCODE_TAG );
+
 		if ( 'page' === get_post_type() ) {
+			self::register_assets();
+
+			wp_enqueue_script( self::SLUG );
+
+			if ( wp_validate_boolean( $atts['grunion_styles'] ) ) {
+				wp_enqueue_style( 'grunion.css' );
+			}
+
+			ob_start();
 			self::render_public_page();
+			$html = ob_get_clean();
 		}
+
+		return $html;
 	}
 
 	/**

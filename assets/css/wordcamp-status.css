@@ -3,6 +3,8 @@
 	background: transparent;
 	border: 0;
 	cursor: pointer;
+	display: inline-block;
+	vertical-align: middle;
 }
 
 #status-log-bulk-bar .status-log-bulk-toggle {

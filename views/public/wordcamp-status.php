@@ -15,42 +15,42 @@ use WordCamp\Reports\Report;
 /** @var Report\WordCamp_Status|null $report */
 ?>
 
-<div class="<?php echo esc_attr( Report\WordCamp_Status::SLUG ); ?>">
-	<p>
+<div id="<?php echo esc_attr( Report\WordCamp_Status::SLUG ); ?>-report" class="report-container">
+	<p class="report-description">
 		<?php echo wp_kses_post( Report\WordCamp_Status::DESCRIPTION ); ?>
 	</p>
 
-	<form method="get" action="">
+	<form method="get" action="" class="report-form contact-form">
 		<input type="hidden" name="action" value="run-report" />
 
-		<table class="form-table">
-			<tbody>
-			<tr>
-				<th scope="row"><label for="start-date">Start Date</label></th>
-				<td><input type="date" id="start-date" name="start-date" value="<?php echo esc_attr( $start_date ) ?>" /></td>
-			</tr>
-			<tr>
-				<th scope="row"><label for="end-date">End Date</label></th>
-				<td><input type="date" id="end-date" name="end-date" value="<?php echo esc_attr( $end_date ) ?>" /></td>
-			</tr>
-			<tr>
-				<th scope="row"><label for="status">Status</label></th>
-				<td>
-					<select id="status" name="status">
-						<option value="any"<?php selected( ( ! $status || 'any' === $status ) ); ?>>Any</option>
-						<?php foreach ( $statuses as $value => $label ) : ?>
-							<option value="<?php echo esc_attr( $value ); ?>"<?php selected( $value, $status ); ?>><?php echo esc_attr( $label ); ?></option>
-						<?php endforeach; ?>
-					</select>
-				</td>
-			</tr>
-			</tbody>
-		</table>
+		<div>
+			<label for="start-date" class="grunion-field-label">Start Date <span>(required)</span></label>
+			<input type="date" id="start-date" name="start-date" value="<?php echo esc_attr( $start_date ) ?>" />
+		</div>
 
-		<?php submit_button( 'Submit', 'primary', '' ); ?>
+		<div>
+			<label for="end-date" class="grunion-field-label">End Date <span>(required)</span></label>
+			<input type="date" id="end-date" name="end-date" value="<?php echo esc_attr( $end_date ) ?>" />
+		</div>
+
+		<div>
+			<label for="status" class="grunion-field-label">Status</label>
+			<select id="status" name="status">
+				<option value="any"<?php selected( ( ! $status || 'any' === $status ) ); ?>>Any</option>
+				<?php foreach ( $statuses as $value => $label ) : ?>
+					<option value="<?php echo esc_attr( $value ); ?>"<?php selected( $value, $status ); ?>><?php echo esc_attr( $label ); ?></option>
+				<?php endforeach; ?>
+			</select>
+		</div>
+
+		<div>
+			<?php submit_button( 'Submit', 'primary', '' ); ?>
+		</div>
 	</form>
 
 	<?php if ( $report instanceof Report\WordCamp_Status ) : ?>
-		<?php $report->render_html(); ?>
+		<div class="report-results">
+			<?php $report->render_html(); ?>
+		</div>
 	<?php endif; ?>
 </div>
