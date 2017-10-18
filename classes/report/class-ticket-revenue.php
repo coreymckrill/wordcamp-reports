@@ -9,25 +9,25 @@ defined( 'WPINC' ) || die();
 use WordCamp\Reports;
 
 /**
- * Class Ticket_Sales
+ * Class Ticket_Revenue
  *
  * @package WordCamp\Reports\Report
  */
-class Ticket_Sales extends Base {
+class Ticket_Revenue extends Base {
 	/**
 	 * Report name.
 	 */
-	const NAME = 'Ticket Sales';
+	const NAME = 'Ticket Revenue';
 
 	/**
 	 * Report slug.
 	 */
-	const SLUG = 'ticket-sales';
+	const SLUG = 'ticket-revenue';
 
 	/**
 	 * Report description.
 	 */
-	const DESCRIPTION = 'A summary of WordCamp ticket sales during a given time period.';
+	const DESCRIPTION = 'A summary of WordCamp ticket revenue during a given time period.';
 
 	/**
 	 * The start of the date range for the report.
@@ -44,12 +44,21 @@ class Ticket_Sales extends Base {
 	protected $end_date = null;
 
 	/**
-	 * Ticket_Sales constructor.
+	 * A container object to hold error messages.
+	 *
+	 * @var \WP_Error
+	 */
+	public $error = null;
+
+	/**
+	 * Ticket_Revenue constructor.
 	 *
 	 * @param \DateTime $start_date The start of the date range for the report.
 	 * @param \DateTime $end_date   The end of the date range for the report.
 	 */
 	public function __construct( $start_date, $end_date ) {
+		$this->error = new \WP_Error();
+
 		$this->start_date = new \DateTime( $start_date );
 		$this->end_date = new \DateTime( $end_date );
 
@@ -61,23 +70,26 @@ class Ticket_Sales extends Base {
 	}
 
 
-	public function get_data() {}
+	public function get_data() {
+
+	}
 
 
 	public function render_html() {}
 
 
 	public static function render_admin_page() {
-		$action     = filter_input( INPUT_POST, 'action' );
 		$start_date = filter_input( INPUT_POST, 'start-date' );
 		$end_date   = filter_input( INPUT_POST, 'end-date' );
+		$action     = filter_input( INPUT_POST, 'action' );
 		$nonce      = filter_input( INPUT_POST, self::SLUG . '-nonce' );
+
 		$report     = null;
 
 		if ( 'run-report' === $action && wp_verify_nonce( $nonce, 'run-report' ) ) {
 			$report = new self( $start_date, $end_date );
 		}
 
-		include Reports\get_views_dir_path() . 'report/ticket-sales.php';
+		include Reports\get_views_dir_path() . 'report/ticket-revenue.php';
 	}
 }

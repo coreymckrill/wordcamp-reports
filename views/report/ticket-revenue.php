@@ -3,7 +3,7 @@
  * @package WordCamp\Reports
  */
 
-namespace WordCamp\Reports\Views\Report\Ticket_Sales;
+namespace WordCamp\Reports\Views\Report\Ticket_Revenue;
 defined( 'WPINC' ) || die();
 
 use WordCamp\Reports;
@@ -11,23 +11,23 @@ use WordCamp\Reports\Report;
 
 /** @var string $start_date */
 /** @var string $end_date */
-/** @var Report\Ticket_Sales|null $report */
+/** @var Report\Ticket_Revenue|null $report */
 ?>
 
 <div class="wrap">
 	<h1>
 		<a href="<?php echo esc_attr( Reports\get_page_url() ); ?>">WordCamp Reports</a>
 		&raquo;
-		<?php echo esc_html( Report\Ticket_Sales::NAME ); ?>
+		<?php echo esc_html( Report\Ticket_Revenue::NAME ); ?>
 	</h1>
 
 	<p>
-		<?php echo wp_kses_post( Report\Ticket_Sales::DESCRIPTION ); ?>
+		<?php echo wp_kses_post( Report\Ticket_Revenue::DESCRIPTION ); ?>
 	</p>
 
 	<form method="post" action="">
 		<input type="hidden" name="action" value="run-report" />
-		<?php wp_nonce_field( 'run-report', Report\Ticket_Sales::SLUG . '-nonce' ); ?>
+		<?php wp_nonce_field( 'run-report', Report\Ticket_Revenue::SLUG . '-nonce' ); ?>
 
 		<table class="form-table">
 			<tbody>
@@ -45,7 +45,7 @@ use WordCamp\Reports\Report;
 		<?php submit_button( 'Submit', 'primary' ); ?>
 	</form>
 
-	<?php if ( $report instanceof Report\Ticket_Sales ) : ?>
+	<?php if ( $report instanceof Report\Ticket_Revenue ) : ?>
 		<?php $report->render_html(); ?>
 	<?php endif; ?>
 </div>

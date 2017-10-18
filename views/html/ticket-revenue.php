@@ -3,7 +3,7 @@
  * @package WordCamp\Reports
  */
 
-namespace WordCamp\Reports\Views\HTML\Ticket_Sales;
+namespace WordCamp\Reports\Views\HTML\Ticket_Revenue;
 defined( 'WPINC' ) || die();
 
 
