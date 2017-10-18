@@ -97,7 +97,7 @@ spl_autoload_register( function( $class ) {
 function get_report_classes() {
 	return array(
 		__NAMESPACE__ . '\Report\WordCamp_Status',
-		__NAMESPACE__ . '\Report\Ticket_Sales',
+		__NAMESPACE__ . '\Report\Ticket_Revenue',
 	);
 }
 
@@ -128,10 +128,18 @@ add_action( 'admin_menu', __NAMESPACE__ . '\add_reports_page' );
  * @return void
  */
 function render_page() {
-	$report       = filter_input( INPUT_GET, 'report', FILTER_SANITIZE_STRING );
-	$report_class = get_report_class_by_slug( $report );
+	$report         = filter_input( INPUT_GET, 'report', FILTER_SANITIZE_STRING );
+	$report_class   = get_report_class_by_slug( $report );
 
-	if ( ! is_null( $report_class ) ) {
+	$reports_with_admin = array_filter( get_report_classes(), function( $class ) {
+		if ( ! method_exists( $class, 'render_admin_page' ) ) {
+			return false;
+		}
+
+		return true;
+	} );
+
+	if ( $report_class && in_array( $report_class, $reports_with_admin, true ) ) {
 		$report_class::render_admin_page();
 	} else {
 		include get_views_dir_path() . 'admin.php';

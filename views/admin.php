@@ -8,6 +8,7 @@ defined( 'WPINC' ) || die();
 
 use WordCamp\Reports;
 
+/** @var array $reports_with_admin */
 ?>
 
 <div class="wrap">
@@ -16,7 +17,7 @@ use WordCamp\Reports;
 	<p>Choose a report:</p>
 
 	<ul class="ul-disc">
-		<?php foreach ( Reports\get_report_classes() as $class ) : ?>
+		<?php foreach ( $reports_with_admin as $class ) : ?>
 			<li>
 				<a href="<?php echo esc_attr( Reports\get_page_url( $class::SLUG ) ); ?>"><?php echo esc_html( $class::NAME ); ?></a>
 				&ndash;

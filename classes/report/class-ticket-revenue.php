@@ -74,22 +74,4 @@ class Ticket_Revenue extends Base {
 
 	}
 
-
-	public function render_html() {}
-
-
-	public static function render_admin_page() {
-		$start_date = filter_input( INPUT_POST, 'start-date' );
-		$end_date   = filter_input( INPUT_POST, 'end-date' );
-		$action     = filter_input( INPUT_POST, 'action' );
-		$nonce      = filter_input( INPUT_POST, self::SLUG . '-nonce' );
-
-		$report     = null;
-
-		if ( 'run-report' === $action && wp_verify_nonce( $nonce, 'run-report' ) ) {
-			$report = new self( $start_date, $end_date );
-		}
-
-		include Reports\get_views_dir_path() . 'report/ticket-revenue.php';
-	}
 }
