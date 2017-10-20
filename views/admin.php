@@ -19,9 +19,9 @@ use WordCamp\Reports;
 	<ul class="ul-disc">
 		<?php foreach ( $reports_with_admin as $class ) : ?>
 			<li>
-				<a href="<?php echo esc_attr( Reports\get_page_url( $class::SLUG ) ); ?>"><?php echo esc_html( $class::NAME ); ?></a>
+				<a href="<?php echo esc_attr( Reports\get_page_url( $class::$slug ) ); ?>"><?php echo esc_html( $class::$name ); ?></a>
 				&ndash;
-				<em><?php echo esc_html( $class::DESCRIPTION ); ?></em>
+				<em><?php echo esc_html( $class::$description ); ?></em>
 			</li>
 		<?php endforeach; ?>
 	</ul>

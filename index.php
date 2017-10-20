@@ -128,8 +128,8 @@ add_action( 'admin_menu', __NAMESPACE__ . '\add_reports_page' );
  * @return void
  */
 function render_page() {
-	$report         = filter_input( INPUT_GET, 'report', FILTER_SANITIZE_STRING );
-	$report_class   = get_report_class_by_slug( $report );
+	$report       = filter_input( INPUT_GET, 'report', FILTER_SANITIZE_STRING );
+	$report_class = get_report_class_by_slug( $report );
 
 	$reports_with_admin = array_filter( get_report_classes(), function( $class ) {
 		if ( ! method_exists( $class, 'render_admin_page' ) ) {
@@ -177,7 +177,7 @@ function get_report_class_by_slug( $report_slug ) {
 	$report_classes = get_report_classes();
 
 	$report_slugs = array_map( function( $class ) {
-		return $class::SLUG;
+		return $class::$slug;
 	}, $report_classes );
 
 	$reports = array_combine( $report_slugs, $report_classes );
@@ -215,8 +215,8 @@ function register_shortcodes() {
 	$report_classes = get_report_classes();
 
 	foreach ( $report_classes as $class ) {
-		if ( method_exists( $class, 'handle_shortcode' ) && $class::SHORTCODE_TAG ) {
-			add_shortcode( $class::SHORTCODE_TAG, array( $class, 'handle_shortcode' ) );
+		if ( property_exists( $class, 'shortcode_tag' ) && method_exists( $class, 'handle_shortcode' ) ) {
+			add_shortcode( $class::$shortcode_tag, array( $class, 'handle_shortcode' ) );
 		}
 	}
 }

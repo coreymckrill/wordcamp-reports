@@ -15,9 +15,9 @@ use WordCamp\Reports\Report;
 /** @var Report\WordCamp_Status|null $report */
 ?>
 
-<div id="<?php echo esc_attr( Report\WordCamp_Status::SLUG ); ?>-report" class="report-container">
+<div id="<?php echo esc_attr( Report\WordCamp_Status::$slug ); ?>-report" class="report-container">
 	<p class="report-description">
-		<?php echo wp_kses_post( Report\WordCamp_Status::DESCRIPTION ); ?>
+		<?php echo wp_kses_post( Report\WordCamp_Status::$description ); ?>
 	</p>
 
 	<form method="get" action="" class="report-form contact-form">

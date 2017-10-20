@@ -20,16 +20,16 @@ use WordCamp\Reports\Report;
 	<h1>
 		<a href="<?php echo esc_attr( Reports\get_page_url() ); ?>">WordCamp Reports</a>
 		&raquo;
-		<?php echo esc_html( Report\WordCamp_Status::NAME ); ?>
+		<?php echo esc_html( Report\WordCamp_Status::$name ); ?>
 	</h1>
 
 	<p>
-		<?php echo wp_kses_post( Report\WordCamp_Status::DESCRIPTION ); ?>
+		<?php echo wp_kses_post( Report\WordCamp_Status::$description ); ?>
 	</p>
 
 	<form method="post" action="">
 		<input type="hidden" name="action" value="run-report" />
-		<?php wp_nonce_field( 'run-report', Report\WordCamp_Status::SLUG . '-nonce' ); ?>
+		<?php wp_nonce_field( 'run-report', Report\WordCamp_Status::$slug . '-nonce' ); ?>
 
 		<table class="form-table">
 			<tbody>
