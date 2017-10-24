@@ -98,6 +98,7 @@ function get_report_classes() {
 	return array(
 		__NAMESPACE__ . '\Report\WordCamp_Status',
 		__NAMESPACE__ . '\Report\Ticket_Revenue',
+		__NAMESPACE__ . '\Report\Sponsor_Invoices',
 	);
 }
 
