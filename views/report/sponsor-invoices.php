@@ -19,16 +19,16 @@ use WordCamp\Reports\Report;
 	<h1>
 		<a href="<?php echo esc_attr( Reports\get_page_url() ); ?>">WordCamp Reports</a>
 		&raquo;
-		<?php echo esc_html( Report\WordCamp_Status::$name ); ?>
+		<?php echo esc_html( Report\Sponsor_Invoices::$name ); ?>
 	</h1>
 
 	<p>
-		<?php echo wp_kses_post( Report\WordCamp_Status::$description ); ?>
+		<?php echo wp_kses_post( Report\Sponsor_Invoices::$description ); ?>
 	</p>
 
 	<form method="post" action="">
 		<input type="hidden" name="action" value="run-report" />
-		<?php wp_nonce_field( 'run-report', self::$slug . '-nonce' ); ?>
+		<?php wp_nonce_field( 'run-report', Report\Sponsor_Invoices::$slug . '-nonce' ); ?>
 
 		<table class="form-table">
 			<tbody>
@@ -50,7 +50,7 @@ use WordCamp\Reports\Report;
 		<?php submit_button( 'Submit', 'primary', '' ); ?>
 	</form>
 
-	<?php if ( $report instanceof Report\WordCamp_Status ) : ?>
+	<?php if ( $report instanceof Report\Sponsor_Invoices ) : ?>
 		<?php $report->render_html(); ?>
 	<?php endif; ?>
 </div>
