@@ -305,6 +305,8 @@ class Sponsor_Invoices extends Date_Range {
 			$amount_by_currency[ $currency ] += $amount;
 		}
 
+		ksort( $amount_by_currency );
+
 		return array(
 			'total_count'        => $total_count,
 			'amount_by_currency' => $amount_by_currency,

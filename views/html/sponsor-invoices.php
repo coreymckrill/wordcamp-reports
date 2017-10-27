@@ -30,27 +30,27 @@ defined( 'WPINC' ) || die();
 <?php if ( $invoices_sent > 0 || $payments_received > 0 ) : ?>
 	<ul class="ul-disc">
 		<?php if ( $invoices_sent > 0 ) : ?>
-			<li>Invoices sent: <?php echo esc_html( $invoices_sent ); ?></li>
-		<?php endif; ?>
-		<?php if ( ! empty( $invoice_amounts ) ) : ?>
 			<li>
-				<ul class="ul-disc">
-					<?php foreach ( $invoice_amounts as $currency => $amount ) : ?>
-						<li><?php echo esc_html( $currency ); ?>: <?php echo number_format_i18n( $amount ) ?></li>
-					<?php endforeach; ?>
-				</ul>
+				Invoices sent: <?php echo esc_html( $invoices_sent ); ?>
+				<?php if ( ! empty( $invoice_amounts ) ) : ?>
+					<ul class="ul-disc">
+						<?php foreach ( $invoice_amounts as $currency => $amount ) : ?>
+							<li><?php echo esc_html( $currency ); ?>: <?php echo number_format_i18n( $amount ) ?></li>
+						<?php endforeach; ?>
+					</ul>
+				<?php endif; ?>
 			</li>
 		<?php endif; ?>
 		<?php if ( $payments_received > 0 ) : ?>
-			<li>Payments received: <?php echo esc_html( $payments_received ); ?></li>
-		<?php endif; ?>
-		<?php if ( ! empty( $payment_amounts ) ) : ?>
 			<li>
-				<ul class="ul-disc">
-					<?php foreach ( $payment_amounts as $currency => $amount ) : ?>
-						<li><?php echo esc_html( $currency ); ?>: <?php echo number_format_i18n( $amount ) ?></li>
-					<?php endforeach; ?>
-				</ul>
+				Payments received: <?php echo esc_html( $payments_received ); ?>
+				<?php if ( ! empty( $payment_amounts ) ) : ?>
+					<ul class="ul-disc">
+						<?php foreach ( $payment_amounts as $currency => $amount ) : ?>
+							<li><?php echo esc_html( $currency ); ?>: <?php echo number_format_i18n( $amount ) ?></li>
+						<?php endforeach; ?>
+					</ul>
+				<?php endif; ?>
 			</li>
 		<?php endif; ?>
 	</ul>
