@@ -41,7 +41,7 @@ use WordCamp\Reports\Report;
 				<td><input type="date" id="end-date" name="end-date" value="<?php echo esc_attr( $end_date ) ?>" /></td>
 			</tr>
 			<tr>
-				<th scope="row"><label for="wordcamp-id">WordCamp ID</label></th>
+				<th scope="row"><label for="wordcamp-id">WordCamp ID (optional)</label></th>
 				<td><input type="number" id="wordcamp-id" name="wordcamp-id" value="<?php echo esc_attr( $wordcamp_id ) ?>" /></td>
 			</tr>
 			</tbody>

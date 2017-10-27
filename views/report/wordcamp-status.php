@@ -42,7 +42,7 @@ use WordCamp\Reports\Report;
 					<td><input type="date" id="end-date" name="end-date" value="<?php echo esc_attr( $end_date ) ?>" /></td>
 				</tr>
 				<tr>
-					<th scope="row"><label for="status">Status</label></th>
+					<th scope="row"><label for="status">Status (optional)</label></th>
 					<td>
 						<select id="status" name="status">
 							<option value="any"<?php selected( ( ! $status || 'any' === $status ) ); ?>>Any</option>
