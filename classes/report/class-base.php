@@ -117,4 +117,26 @@ abstract class Base {
 
 		return false;
 	}
+
+	/**
+	 * Merge two error objects into one, new error object.
+	 *
+	 * @param \WP_Error $error1 An error object.
+	 * @param \WP_Error $error2 An error object.
+	 *
+	 * @return \WP_Error The combined errors of the two parameters.
+	 */
+	protected function merge_errors( \WP_Error $error1, \WP_Error $error2 ) {
+		$codes = $error2->get_error_codes();
+
+		foreach ( $codes as $code ) {
+			$messages = $error2->get_error_messages( $code );
+
+			foreach ( $messages as $message ) {
+				$error1->add( $code, $message );
+			}
+		}
+
+		return $error1;
+	}
 }
