@@ -8,7 +8,6 @@ defined( 'WPINC' ) || die();
 
 use WordCamp\Reports;
 use WordCamp\Reports\Utilities;
-use WordCamp\Budgets\Sponsor_Invoices as WCB_Sponsor_Invoices;
 use WordCamp\Budgets_Dashboard\Sponsor_Invoices as WCBD_Sponsor_Invoices;
 
 /**
@@ -41,11 +40,6 @@ class Sponsor_Invoices extends Date_Range {
 	 * @var int The ID of the WordCamp site where the invoices are located.
 	 */
 	public $wordcamp_site_id = 0;
-
-	/**
-	 * @var string The status ID to filter for in the report.
-	 */
-	public $status = '';
 
 	/**
 	 * Sponsor_Invoices constructor.
