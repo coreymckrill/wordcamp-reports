@@ -126,54 +126,74 @@ class Sponsor_Invoices extends Date_Range {
 			return $data;
 		}
 
-		$qbo_invoices = $this->get_qbo_invoices();
+		$data = array(
+			'invoices' => $this->parse_transaction_stats( array() ),
+			'payments' => $this->parse_transaction_stats( array() ),
+		);
 
-		if ( is_wp_error( $qbo_invoices ) ) {
-			$this->error = $this->merge_errors( $this->error, $qbo_invoices );
-			return array();
+		// If a particular WordCamp is specified, check to see if it has invoices.
+		$allowed_invoice_ids = array();
+		if ( $this->wordcamp_site_id ) {
+			$allowed_invoice_ids = array_keys( $this->get_indexed_invoices() );
 		}
 
-		$indexed_invoices = $this->get_indexed_invoices( array_keys( $qbo_invoices ) );
+		if ( ! $this->wordcamp_site_id || ! empty( $allowed_invoice_ids ) ) {
+			$qbo_invoices = $this->get_qbo_invoices();
 
-		// Filter out QBO invoices not in the index list.
-		// Excludes non-sponsor invoices and invoices from other WordCamps if the `wordcamp_id` property has been set.
-		$qbo_invoices = array_intersect_key( $qbo_invoices, $indexed_invoices );
+			if ( is_wp_error( $qbo_invoices ) ) {
+				$this->error = $this->merge_errors( $this->error, $qbo_invoices );
 
-		$qbo_payments = $this->get_qbo_payments();
-
-		if ( is_wp_error( $qbo_payments ) ) {
-			$this->error = $this->merge_errors( $this->error, $qbo_payments );
-			return array();
-		}
-
-		// Filter out QBO payments that aren't for invoices.
-		$qbo_payments = array_filter( $qbo_payments, function( $payment ) {
-			if ( ! isset( $payment['Line'] ) || empty( $payment['Line'] ) ) {
-				return false;
+				return array();
 			}
 
-			$return = false;
+			$indexed_invoices = $this->get_indexed_invoices( array_keys( $qbo_invoices ) );
 
-			foreach ( $payment['Line'] as $line ) {
-				if ( ! isset( $line['LinkedTxn'] ) ) {
-					continue;
+			// Filter out QBO invoices not in the index list.
+			// Excludes non-sponsor invoices and invoices from other WordCamps if the `wordcamp_id` property has been set.
+			$qbo_invoices = array_intersect_key( $qbo_invoices, $indexed_invoices );
+
+			$qbo_payments = $this->get_qbo_payments();
+
+			if ( is_wp_error( $qbo_payments ) ) {
+				$this->error = $this->merge_errors( $this->error, $qbo_payments );
+
+				return array();
+			}
+
+			// Filter out QBO payments that aren't for relevant invoices.
+			$qbo_payments = array_filter( $qbo_payments, function ( $payment ) use ( $allowed_invoice_ids ) {
+				if ( ! isset( $payment['Line'] ) || empty( $payment['Line'] ) ) {
+					return false;
 				}
 
-				foreach ( $line['LinkedTxn'] as $txn ) {
-					if ( 'Invoice' === $txn['TxnType'] ) {
-						$return = true;
-						break 2;
+				$return = false;
+
+				foreach ( $payment['Line'] as $line ) {
+					if ( ! isset( $line['LinkedTxn'] ) ) {
+						continue;
+					}
+
+					foreach ( $line['LinkedTxn'] as $txn ) {
+						if ( 'Invoice' === $txn['TxnType'] ) {
+							if ( $this->wordcamp_site_id ) {
+								if ( in_array( absint( $txn['TxnId'] ), $allowed_invoice_ids, true ) ) {
+									$return = true;
+									break 2;
+								}
+							} else {
+								$return = true;
+								break 2;
+							}
+						}
 					}
 				}
-			}
 
-			return $return;
-		} );
+				return $return;
+			} );
 
-		$data = array(
-			'invoices' => $this->parse_transaction_stats( $qbo_invoices ),
-			'payments' => $this->parse_transaction_stats( $qbo_payments ),
-		);
+			$data['invoices'] = $this->parse_transaction_stats( $qbo_invoices );
+			$data['payments'] = $this->parse_transaction_stats( $qbo_payments );
+		}
 
 		// Maybe cache the data.
 		$this->maybe_cache_data( $data );
@@ -208,6 +228,8 @@ class Sponsor_Invoices extends Date_Range {
 	 * Get invoices from the WordCamp database that match invoice IDs from QBO.
 	 *
 	 * Limit the returned invoices to a specific WordCamp if the `wordcamp_id` property has been set.
+	 *
+	 * @param array $ids Optional. A list of QBO invoice IDs to filter by.
 	 *
 	 * @return array
 	 */
