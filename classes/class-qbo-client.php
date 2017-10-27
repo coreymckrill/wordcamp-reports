@@ -231,14 +231,18 @@ class QBO_Client {
 	}
 
 	/**
-	 * Wrapper for sending a request to the QBO API to retrieve transactions of a specified type.
+	 * Retrieve transactions from QBO.
 	 *
-	 * @param string $type    The type of transactions to retrieve. Possible values: 'invoice', 'payment'
-	 * @param array  $txn_ids The IDs of the transactions to retrieve.
+	 * Supports making multiple requests if the results are paginated.
+	 *
+	 * @param string $type         The type of transactions to retrieve. Possible values: 'invoice', 'payment'.
+	 * @param array  $filter       Optional. One or more WHERE clauses that will be joined together with AND. Specific
+	 *                             values should be represented by placeholder tokens supported by $wpdb->prepare().
+	 * @param array  $filter_input Optional. The values that will replace the placeholder tokens.
 	 *
 	 * @return array|\WP_Error
 	 */
-	public function get_transactions( $type, array $txn_ids ) {
+	protected function get_transactions( $type, array $filter = array(), array $filter_input = array() ) {
 		$allowed_types = array(
 			// Type => Fields to select.
 			'Invoice' => 'Id, MetaData, TxnDate, CurrencyRef, LinkedTxn, TotalAmt, Balance',
@@ -268,20 +272,20 @@ class QBO_Client {
 			rawurlencode( $this->oauth_options['auth']['realmId'] )
 		);
 
-		// IDs are initially cast as integers for validation, and then converted back to strings, because that's what QBO expects.
-		$txn_ids             = array_map( 'absint', $txn_ids );
-		$txn_id_placeholders = implode( ', ', array_fill( 0, count( $txn_ids ), '%s' ) );
-
 		// Build query elements.
 		$select_count  = 'SELECT count(*)';
 		$select_fields = 'SELECT ' . $allowed_types[ $type ];
 		$from          = 'FROM ' . $type;
-		$where         = 'WHERE Id IN ( ' . $txn_id_placeholders . ' )';
+		$where         = '';
+
+		if ( ! empty( $filter ) ) {
+			$where = 'WHERE ' . implode( ' AND ', $filter );
+		}
 
 		// First send an initial request to get the total number of items available.
 		$count_query = $wpdb->prepare(
 			"$select_count $from $where",
-			$txn_ids
+			$filter_input
 		);
 
 		$response = $this->send_get_request( $url, array( 'query' => $count_query ) );
@@ -291,8 +295,9 @@ class QBO_Client {
 		}
 
 		// Then send paginated requests until all of the items have been retrieved.
+		// See https://developer.intuit.com/docs/0100_quickbooks_online/0300_references/0000_programming_guide/0050_data_queries#/Maximum_number_of_entities_in_a_response
 		$data           = array();
-		$max_results    = 1000; // See https://developer.intuit.com/docs/0100_quickbooks_online/0300_references/0000_programming_guide/0050_data_queries#/Maximum_number_of_entities_in_a_response
+		$max_results    = 1000;
 		$pages          = ceil( $response['QueryResponse']['totalCount'] / $max_results );
 		$page           = 1;
 		$start_position = 1;
@@ -300,7 +305,7 @@ class QBO_Client {
 		while ( $page <= $pages ) {
 			$page_query = $wpdb->prepare(
 				"$select_fields $from $where STARTPOSITION $start_position MAXRESULTS $max_results",
-				$txn_ids
+				$filter_input
 			);
 
 			$response = $this->send_get_request( $url, array( 'query' => $page_query ) );
@@ -316,5 +321,41 @@ class QBO_Client {
 		}
 
 		return $data;
+	}
+
+	/**
+	 * A wrapper method for retrieving transactions occurring during a specific period of time.
+	 *
+	 * @param string    $type       The type of transactions to retrieve. Possible values: 'invoice', 'payment'.
+	 * @param \DateTime $start_date The beginning of the date range.
+	 * @param \DateTime $end_date   The end of the date range.
+	 *
+	 * @return array|\WP_Error
+	 */
+	public function get_transactions_by_date( $type, \DateTime $start_date, \DateTime $end_date ) {
+		$filter = array(
+			'TxnDate >= %s',
+			'TxnDate <= %s',
+		);
+
+		return $this->get_transactions( $type, $filter, array( $start_date->format( 'Y-m-d' ), $end_date->format( 'Y-m-d' ) ) );
+	}
+
+	/**
+	 * A wrapper method for retrieving specific transactions based on their IDs.
+	 *
+	 * @param string $type    The type of transactions to retrieve. Possible values: 'invoice', 'payment'.
+	 * @param array  $txn_ids A list of transaction IDs.
+	 *
+	 * @return array|\WP_Error
+	 */
+	public function get_transactions_by_id( $type, array $txn_ids ) {
+		// IDs are initially cast as integers for validation, and then converted back to strings, because that's what QBO expects.
+		$txn_ids             = array_map( 'absint', $txn_ids );
+		$txn_id_placeholders = implode( ', ', array_fill( 0, count( $txn_ids ), '%s' ) );
+
+		$filter = array( 'Id IN ( ' . $txn_id_placeholders . ' )' );
+
+		return $this->get_transactions( $type, $filter, $txn_ids );
 	}
 }
