@@ -381,6 +381,6 @@ class Sponsor_Invoices extends Date_Range {
 			}
 		}
 
-		include Reports\get_views_dir_path() . 'report/sponsor-invoice.php';
+		include Reports\get_views_dir_path() . 'report/sponsor-invoices.php';
 	}
 }
