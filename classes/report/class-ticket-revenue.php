@@ -39,13 +39,18 @@ class Ticket_Revenue extends Date_Range {
 	 */
 	public $wordcamp_site_id = 0;
 
-
+	/**
+	 * Ticket_Revenue constructor.
+	 *
+	 * @param string $start_date  The start of the date range for the report.
+	 * @param string $end_date    The end of the date range for the report.
+	 * @param int    $wordcamp_id Optional. The ID of a WordCamp post to retrieve invoices for.
+	 * @param array  $options     {
+	 *     Optional. Additional report parameters.
+	 *     See Base::__construct and Date_Range::__construct for additional parameters.
+	 * }
+	 */
 	public function __construct( $start_date, $end_date, $wordcamp_id = 0, array $options = array() ) {
-		// Report-specific options.
-		$options = wp_parse_args( $options, array(
-			'max_interval' => new \DateInterval( 'P1M' ), // 1 month. See http://php.net/manual/en/dateinterval.construct.php.
-		) );
-
 		parent::__construct( $start_date, $end_date, $options );
 
 		if ( $wordcamp_id && $this->validate_wordcamp_id( $wordcamp_id ) ) {
@@ -348,15 +353,62 @@ class Ticket_Revenue extends Date_Range {
 		return $camptix->get_payment_method_by_id( 'paypal' )->supported_currencies;
 	}
 
+	/**
+	 * Render an HTML version of the report output.
+	 *
+	 * @return void
+	 */
+	public function render_html() {
+		$data       = $this->get_data();
+		$start_date = $this->start_date;
+		$end_date   = $this->end_date;
 
+		$wordcamp_name = ( $this->wordcamp_site_id ) ? get_wordcamp_name( $this->wordcamp_site_id ) : '';
+		$wpcs          = $data['wpcs'];
+		$non_wpcs      = $data['non_wpcs'];
+		$total         = $data['total'];
+
+		if ( ! empty( $this->error->get_error_messages() ) ) {
+			?>
+			<div class="notice notice-error">
+				<?php foreach ( $this->error->get_error_messages() as $message ) : ?>
+					<?php echo wpautop( wp_kses_post( $message ) ); ?>
+				<?php endforeach; ?>
+			</div>
+			<?php
+		} else {
+			include Reports\get_views_dir_path() . 'html/ticket-revenue.php';
+		}
+	}
+
+	/**
+	 * Render the page for this report in the WP Admin.
+	 *
+	 * @return void
+	 */
 	public static function render_admin_page() {
-		echo '<h1>Ticket Revenue</h1>';
+		$start_date  = filter_input( INPUT_POST, 'start-date' );
+		$end_date    = filter_input( INPUT_POST, 'end-date' );
+		$wordcamp_id = filter_input( INPUT_POST, 'wordcamp-id' );
+		$action      = filter_input( INPUT_POST, 'action' );
+		$nonce       = filter_input( INPUT_POST, self::$slug . '-nonce' );
 
-		$report = new self( '2017-09-01', '2017-09-30', 0, array( 'cache_data' => false ) );
+		$report = null;
 
-		echo '<pre>';
-		var_dump( $report->error->get_error_messages() );
-		var_dump( $report->get_data() );
-		echo '</pre>';
+		if ( 'run-report' === $action && wp_verify_nonce( $nonce, 'run-report' ) ) {
+			$options = array(
+				'earliest_start' => new \DateTime( '2007-11-17' ), // Date of first WordCamp in the system.
+				'cache_data'     => false, // WP Admin is low traffic and more trusted, so turn off caching.
+			);
+
+			$report = new self( $start_date, $end_date, $wordcamp_id, $options );
+
+			// The report adjusts the end date in some circumstances.
+			if ( empty( $report->error->get_error_messages() ) ) {
+				$end_date = $report->end_date->format( 'Y-m-d' );
+			}
+		}
+
+		include Reports\get_views_dir_path() . 'report/ticket-revenue.php';
 	}
 }
