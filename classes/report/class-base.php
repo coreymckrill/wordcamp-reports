@@ -6,10 +6,12 @@
 namespace WordCamp\Reports\Report;
 defined( 'WPINC' ) || die();
 
+use WordCamp\Reports\Utilities;
+
 /**
  * Class Base
  *
- * A base report class with methods for caching data.
+ * A base report class with methods for caching data and handling errors, plus some other helper methods.
  *
  * @package WordCamp\Reports\Report
  */
@@ -138,5 +140,32 @@ abstract class Base {
 		}
 
 		return $error1;
+	}
+
+	/**
+	 * Validate a given WordCamp post ID.
+	 *
+	 * @param int $wordcamp_id The ID of a WordCamp post.
+	 *
+	 * @return bool True if the WordCamp ID is valid. Otherwise false.
+	 */
+	protected function validate_wordcamp_id( $wordcamp_id ) {
+		$wordcamp = get_post( $wordcamp_id );
+
+		if ( ! $wordcamp instanceof \WP_Post || Utilities\get_wordcamp_post_type_id() !== get_post_type( $wordcamp ) ) {
+			$this->error->add( 'invalid_wordcamp_id', 'Please enter a valid WordCamp ID.' );
+
+			return false;
+		}
+
+		$wordcamp_site_id = get_wordcamp_site_id( $wordcamp );
+
+		if ( ! $wordcamp_site_id ) {
+			$this->error->add( 'wordcamp_without_site', 'The specified WordCamp does not have a site yet.' );
+
+			return false;
+		}
+
+		return true;
 	}
 }
