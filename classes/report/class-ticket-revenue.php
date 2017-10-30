@@ -51,12 +51,21 @@ class Ticket_Revenue extends Date_Range {
 	 * }
 	 */
 	public function __construct( $start_date, $end_date, $wordcamp_id = 0, array $options = array() ) {
-		parent::__construct( $start_date, $end_date, $options );
-
 		if ( $wordcamp_id && $this->validate_wordcamp_id( $wordcamp_id ) ) {
 			$this->wordcamp_id      = $wordcamp_id;
 			$this->wordcamp_site_id = get_wordcamp_site_id( get_post( $wordcamp_id ) );
 		}
+
+		if ( ! $this->wordcamp_site_id ) {
+			// Limit the date interval if the report is not for a specific camp. Retrieving all ticket sales activity
+			// across the network for a long date interval is very memory intensive.
+			// @todo Maybe find a workaround for this limitation?
+			$options = wp_parse_args( $options, array(
+				'max_interval' => new \DateInterval( 'P2M' ), // 2 months. See http://php.net/manual/en/dateinterval.construct.php.,
+			) );
+		}
+
+		parent::__construct( $start_date, $end_date, $options );
 	}
 
 	/**
