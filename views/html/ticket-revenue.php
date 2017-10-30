@@ -27,6 +27,8 @@ defined( 'WPINC' ) || die();
 		<?php endif; ?>
 	</h3>
 
+	<p class="description">These numbers are based on the assumption that every camp using a currency that is supported by PayPal is running its ticket sales through WPCS.</p>
+
 	<ul>
 		<li>Tickets sold: <?php echo number_format_i18n( $wpcs['tickets_sold'] ); ?></li>
 		<li>Tickets refunded: <?php echo number_format_i18n( $wpcs['tickets_refunded'] ); ?></li>
