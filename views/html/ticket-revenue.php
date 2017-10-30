@@ -32,7 +32,7 @@ defined( 'WPINC' ) || die();
 		<li>Tickets refunded: <?php echo number_format_i18n( $wpcs['tickets_refunded'] ); ?></li>
 	</ul>
 
-	<table>
+	<table class="widefat striped">
 		<thead>
 			<tr>
 				<td>Currency</td>
@@ -74,7 +74,7 @@ defined( 'WPINC' ) || die();
 		<li>Tickets refunded: <?php echo number_format_i18n( $non_wpcs['tickets_refunded'] ); ?></li>
 	</ul>
 
-	<table>
+	<table class="widefat striped">
 		<thead>
 		<tr>
 			<td>Currency</td>
@@ -116,7 +116,7 @@ defined( 'WPINC' ) || die();
 		<li>Tickets refunded: <?php echo number_format_i18n( $total['tickets_refunded'] ); ?></li>
 	</ul>
 
-	<table>
+	<table class="widefat striped">
 		<thead>
 		<tr>
 			<td>Currency</td>
