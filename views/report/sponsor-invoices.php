@@ -3,7 +3,7 @@
  * @package WordCamp\Reports
  */
 
-namespace WordCamp\Reports\Views\Report\WordCamp_Status;
+namespace WordCamp\Reports\Views\Report\Sponsor_Invoices;
 defined( 'WPINC' ) || die();
 
 use WordCamp\Reports;
@@ -12,7 +12,7 @@ use WordCamp\Reports\Report;
 /** @var string $start_date */
 /** @var string $end_date */
 /** @var int $wordcamp_id */
-/** @var Report\WordCamp_Status|null $report */
+/** @var Report\Sponsor_Invoices|null $report */
 ?>
 
 <div class="wrap">
