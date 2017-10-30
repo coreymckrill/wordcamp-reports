@@ -7,7 +7,6 @@ namespace WordCamp\Reports\Report;
 defined( 'WPINC' ) || die();
 
 use WordCamp\Reports;
-use WordCamp\Reports\Utilities;
 use WordCamp\Budgets_Dashboard\Sponsor_Invoices as WCBD_Sponsor_Invoices;
 
 /**
