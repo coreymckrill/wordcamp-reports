@@ -111,7 +111,7 @@ class Payment_Activity extends Date_Range {
 
 		$payment_posts = array_map( array( $this, 'parse_payment_post_log' ), $payment_posts );
 		$payment_posts = array_filter( $payment_posts, function( $payment ) {
-			if ( ! $this->timestamp_within_date_range( $payment['timestamp_approved'] ) && ! $this->timestamp_within_date_range( $payment['timestamp_payment_pending'] ) ) {
+			if ( ! $this->timestamp_within_date_range( $payment['timestamp_approved'] ) && ! $this->timestamp_within_date_range( $payment['timestamp_paid'] ) ) {
 				return false;
 			}
 
@@ -230,19 +230,37 @@ class Payment_Activity extends Date_Range {
 	 */
 	protected function parse_payment_post_log( array $payment_post ) {
 		$parsed_post = wp_parse_args( array(
-			'timestamp_approved'        => 0,
-			'timestamp_payment_pending' => 0,
+			'timestamp_approved' => 0,
+			'timestamp_paid'     => 0,
 		), $payment_post );
 
 		if ( ! isset( $parsed_post['log'] ) ) {
 			return $parsed_post;
 		}
 
-		foreach ( $parsed_post['log'] as $entry ) {
-			if ( false !== strpos( $entry['message'], 'Request approved' ) ) {
-				$parsed_post['timestamp_approved'] = $entry['timestamp'];
-			} elseif ( false !== strpos( $entry['message'], 'Pending Payment' ) ) {
-				$parsed_post['timestamp_payment_pending'] = $entry['timestamp'];
+		usort( $parsed_post['log'], function( $a, $b ) {
+			// Sort log entries in chronological order.
+			if ( $a['timestamp'] === $b['timestamp'] ) {
+				return 0;
+			}
+
+			return ( $a['timestamp'] > $b['timestamp'] ) ? 1 : -1;
+		} );
+
+		foreach ( $parsed_post['log'] as $index => $entry ) {
+			if ( \BLOG_ID_CURRENT_SITE === $parsed_post['blog_id'] ) {
+				// Payments on central.wordcamp.org have a different workflow.
+				if ( 0 === $index ) {
+					$parsed_post['timestamp_approved'] = $entry['timestamp'];
+				} elseif ( false !== stripos( $entry['message'], 'Marked as paid' ) ) {
+					$parsed_post['timestamp_paid'] = $entry['timestamp'];
+				}
+			} else {
+				if ( false !== stripos( $entry['message'], 'Request approved' ) ) {
+					$parsed_post['timestamp_approved'] = $entry['timestamp'];
+				} elseif ( false !== stripos( $entry['message'], 'Pending Payment' ) ) {
+					$parsed_post['timestamp_paid'] = $entry['timestamp'];
+				}
 			}
 		}
 
@@ -296,7 +314,7 @@ class Payment_Activity extends Date_Range {
 						$data_groups['requests']['vendor_payment_amount_by_currency'][ $payment['currency'] ] += floatval( $payment['amount'] );
 						$data_groups['requests']['total_amount_by_currency'][ $payment['currency'] ]          += floatval( $payment['amount'] );
 					}
-					if ( $this->timestamp_within_date_range( $payment['timestamp_payment_pending'] ) ) {
+					if ( $this->timestamp_within_date_range( $payment['timestamp_paid'] ) ) {
 						$data_groups['payments']['vendor_payment_count'] ++;
 						$data_groups['payments']['vendor_payment_amount_by_currency'][ $payment['currency'] ] += floatval( $payment['amount'] );
 						$data_groups['payments']['total_amount_by_currency'][ $payment['currency'] ]          += floatval( $payment['amount'] );
@@ -309,7 +327,7 @@ class Payment_Activity extends Date_Range {
 						$data_groups['requests']['reimbursement_amount_by_currency'][ $payment['currency'] ] += floatval( $payment['amount'] );
 						$data_groups['requests']['total_amount_by_currency'][ $payment['currency'] ]         += floatval( $payment['amount'] );
 					}
-					if ( $this->timestamp_within_date_range( $payment['timestamp_payment_pending'] ) ) {
+					if ( $this->timestamp_within_date_range( $payment['timestamp_paid'] ) ) {
 						$data_groups['payments']['reimbursement_count'] ++;
 						$data_groups['payments']['reimbursement_amount_by_currency'][ $payment['currency'] ] += floatval( $payment['amount'] );
 						$data_groups['payments']['total_amount_by_currency'][ $payment['currency'] ]         += floatval( $payment['amount'] );
