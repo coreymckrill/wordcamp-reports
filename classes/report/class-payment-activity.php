@@ -261,9 +261,10 @@ class Payment_Activity extends Date_Range {
 	protected function derive_totals_from_payment_events( array $payment_posts ) {
 		$data = array(
 			'vendor_payment_count'              => 0,
-			'vendor_payment_amount_by_currency' => array(),
 			'reimbursement_count'               => 0,
+			'vendor_payment_amount_by_currency' => array(),
 			'reimbursement_amount_by_currency'  => array(),
+			'total_amount_by_currency'          => array(),
 		);
 
 		$data_groups = array(
@@ -281,8 +282,10 @@ class Payment_Activity extends Date_Range {
 			if ( ! in_array( $payment['currency'], $currencies, true ) ) {
 				$data_groups['requests']['vendor_payment_amount_by_currency'][ $payment['currency'] ] = 0;
 				$data_groups['requests']['reimbursement_amount_by_currency'][ $payment['currency'] ]  = 0;
+				$data_groups['requests']['total_amount_by_currency'][ $payment['currency'] ]          = 0;
 				$data_groups['payments']['vendor_payment_amount_by_currency'][ $payment['currency'] ] = 0;
 				$data_groups['payments']['reimbursement_amount_by_currency'][ $payment['currency'] ]  = 0;
+				$data_groups['payments']['total_amount_by_currency'][ $payment['currency'] ]          = 0;
 				$currencies[]                                                                         = $payment['currency'];
 			}
 
@@ -291,10 +294,12 @@ class Payment_Activity extends Date_Range {
 					if ( $this->timestamp_within_date_range( $payment['timestamp_approved'] ) ) {
 						$data_groups['requests']['vendor_payment_count'] ++;
 						$data_groups['requests']['vendor_payment_amount_by_currency'][ $payment['currency'] ] += floatval( $payment['amount'] );
+						$data_groups['requests']['total_amount_by_currency'][ $payment['currency'] ]          += floatval( $payment['amount'] );
 					}
 					if ( $this->timestamp_within_date_range( $payment['timestamp_payment_pending'] ) ) {
 						$data_groups['payments']['vendor_payment_count'] ++;
 						$data_groups['payments']['vendor_payment_amount_by_currency'][ $payment['currency'] ] += floatval( $payment['amount'] );
+						$data_groups['payments']['total_amount_by_currency'][ $payment['currency'] ]          += floatval( $payment['amount'] );
 					}
 					break;
 
@@ -302,10 +307,12 @@ class Payment_Activity extends Date_Range {
 					if ( $this->timestamp_within_date_range( $payment['timestamp_approved'] ) ) {
 						$data_groups['requests']['reimbursement_count'] ++;
 						$data_groups['requests']['reimbursement_amount_by_currency'][ $payment['currency'] ] += floatval( $payment['amount'] );
+						$data_groups['requests']['total_amount_by_currency'][ $payment['currency'] ]         += floatval( $payment['amount'] );
 					}
 					if ( $this->timestamp_within_date_range( $payment['timestamp_payment_pending'] ) ) {
 						$data_groups['payments']['reimbursement_count'] ++;
 						$data_groups['payments']['reimbursement_amount_by_currency'][ $payment['currency'] ] += floatval( $payment['amount'] );
+						$data_groups['payments']['total_amount_by_currency'][ $payment['currency'] ]         += floatval( $payment['amount'] );
 					}
 					break;
 			}
@@ -314,6 +321,7 @@ class Payment_Activity extends Date_Range {
 		foreach ( $data_groups as &$group ) {
 			ksort( $group['vendor_payment_amount_by_currency'] );
 			ksort( $group['reimbursement_amount_by_currency'] );
+			ksort( $group['total_amount_by_currency'] );
 		}
 
 		return $data_groups;
@@ -337,9 +345,39 @@ class Payment_Activity extends Date_Range {
 		return false;
 	}
 
+	/**
+	 * Render an HTML version of the report output.
+	 *
+	 * @return void
+	 */
+	public function render_html() {
+		$data       = $this->get_data();
+		$start_date = $this->start_date;
+		$end_date   = $this->end_date;
 
+		$wordcamp_name = ( $this->wordcamp_site_id ) ? get_wordcamp_name( $this->wordcamp_site_id ) : '';
+		$requests      = $data['requests'];
+		$payments      = $data['payments'];
+
+		if ( ! empty( $this->error->get_error_messages() ) ) {
+			?>
+			<div class="notice notice-error">
+				<?php foreach ( $this->error->get_error_messages() as $message ) : ?>
+					<?php echo wpautop( wp_kses_post( $message ) ); ?>
+				<?php endforeach; ?>
+			</div>
+			<?php
+		} else {
+			include Reports\get_views_dir_path() . 'html/payment-activity.php';
+		}
+	}
+
+	/**
+	 * Render the page for this report in the WP Admin.
+	 *
+	 * @return void
+	 */
 	public static function render_admin_page() {
-		/*
 		$start_date  = filter_input( INPUT_POST, 'start-date' );
 		$end_date    = filter_input( INPUT_POST, 'end-date' );
 		$wordcamp_id = filter_input( INPUT_POST, 'wordcamp-id' );
@@ -361,15 +399,7 @@ class Payment_Activity extends Date_Range {
 				$end_date = $report->end_date->format( 'Y-m-d' );
 			}
 		}
-		*/
 
-		$report = new self( '2017-08-01', '2017-09-30', 0, array( 'cache_data' => false ) );
-
-		echo '<pre>';
-		var_dump( $report->error->get_error_messages() );
-		var_dump( $report->get_data() );
-		echo '</pre>';
-
-		//include Reports\get_views_dir_path() . 'report/payment-activity.php';
+		include Reports\get_views_dir_path() . 'report/payment-activity.php';
 	}
 }
