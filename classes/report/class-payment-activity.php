@@ -40,7 +40,17 @@ class Payment_Activity extends Date_Range {
 	 */
 	public $wordcamp_site_id = 0;
 
-
+	/**
+	 * Payment_Activity constructor.
+	 *
+	 * @param string $start_date  The start of the date range for the report.
+	 * @param string $end_date    The end of the date range for the report.
+	 * @param int    $wordcamp_id Optional. The ID of a WordCamp post to retrieve invoices for.
+	 * @param array  $options     {
+	 *     Optional. Additional report parameters.
+	 *     See Base::__construct and Date_Range::__construct for additional parameters.
+	 * }
+	 */
 	public function __construct( $start_date, $end_date, $wordcamp_id = 0, array $options = array() ) {
 		parent::__construct( $start_date, $end_date, $options );
 
@@ -100,47 +110,15 @@ class Payment_Activity extends Date_Range {
 		}
 
 		$payment_posts = array_map( array( $this, 'parse_payment_post_log' ), $payment_posts );
-
-		$data = array(
-			'requests' => array(
-				'vendor_payment_count'  => 0,
-				'vendor_payment_amount' => 0,
-				'reimbursement_count'   => 0,
-				'reimbursement_amount'  => 0,
-			),
-			'payments' => array(
-				'vendor_payment_count'  => 0,
-				'vendor_payment_amount' => 0,
-				'reimbursement_count'   => 0,
-				'reimbursement_amount'  => 0,
-			),
-		);
-
-		foreach ( $payment_posts as $payment ) {
-			switch ( $payment['post_type'] ) {
-				case 'wcp_payment_request' :
-					if ( $this->timestamp_within_date_range( $payment['timestamp_approved'] ) ) {
-						$data['requests']['vendor_payment_count'] ++;
-						$data['requests']['vendor_payment_amount'] += floatval( $payment['amount'] );
-					}
-					if ( $this->timestamp_within_date_range( $payment['timestamp_payment_pending'] ) ) {
-						$data['payments']['vendor_payment_count'] ++;
-						$data['payments']['vendor_payment_amount'] += floatval( $payment['amount'] );
-					}
-					break;
-
-				case 'wcb_reimbursement' :
-					if ( $this->timestamp_within_date_range( $payment['timestamp_approved'] ) ) {
-						$data['requests']['reimbursement_count'] ++;
-						$data['requests']['reimbursement_amount'] += floatval( $payment['amount'] );
-					}
-					if ( $this->timestamp_within_date_range( $payment['timestamp_payment_pending'] ) ) {
-						$data['payments']['reimbursement_count'] ++;
-						$data['payments']['reimbursement_amount'] += floatval( $payment['amount'] );
-					}
-					break;
+		$payment_posts = array_filter( $payment_posts, function( $payment ) {
+			if ( ! $this->timestamp_within_date_range( $payment['timestamp_approved'] ) && ! $this->timestamp_within_date_range( $payment['timestamp_payment_pending'] ) ) {
+				return false;
 			}
-		}
+
+			return true;
+		} );
+
+		$data = $this->derive_totals_from_payment_events( $payment_posts );
 
 		// Maybe cache the data.
 		$this->maybe_cache_data( $data );
@@ -148,7 +126,11 @@ class Payment_Activity extends Date_Range {
 		return $data;
 	}
 
-
+	/**
+	 * Retrieve Vendor Payments and Reimbursement Requests from their respective index database tables.
+	 *
+	 * @return array
+	 */
 	protected function get_indexed_payments() {
 		/** @global \wpdb $wpdb */
 		global $wpdb;
@@ -178,7 +160,14 @@ class Payment_Activity extends Date_Range {
 		return $wpdb->get_results( $index_query, ARRAY_A );
 	}
 
-
+	/**
+	 * Get payment posts from a particular site.
+	 *
+	 * @param int   $blog_id  The ID of the site.
+	 * @param array $post_ids The list of post IDs to get.
+	 *
+	 * @return array
+	 */
 	protected function get_payment_posts( $blog_id, array $post_ids ) {
 		$payment_posts = array();
 		$post_types    = array( 'wcp_payment_request', 'wcb_reimbursement' );
@@ -229,8 +218,17 @@ class Payment_Activity extends Date_Range {
 		return $payment_posts;
 	}
 
-
-	protected function parse_payment_post_log( $payment_post ) {
+	/**
+	 * Determine the timestamps for particular payment post events from the post's log.
+	 *
+	 * This walks through the log array looking for specific events. If it finds them, it adds the event
+	 * timestamp to a new key in the payment post array. At the end, it removes the log from the array.
+	 *
+	 * @param array $payment_post The array of data for a payment post.
+	 *
+	 * @return array
+	 */
+	protected function parse_payment_post_log( array $payment_post ) {
 		$parsed_post = wp_parse_args( array(
 			'timestamp_approved'        => 0,
 			'timestamp_payment_pending' => 0,
@@ -242,9 +240,9 @@ class Payment_Activity extends Date_Range {
 
 		foreach ( $parsed_post['log'] as $entry ) {
 			if ( false !== strpos( $entry['message'], 'Request approved' ) ) {
-				$parsed_post['approved'] = $entry['timestamp'];
+				$parsed_post['timestamp_approved'] = $entry['timestamp'];
 			} elseif ( false !== strpos( $entry['message'], 'Pending Payment' ) ) {
-				$parsed_post['payment_pending'] = $entry['timestamp'];
+				$parsed_post['timestamp_payment_pending'] = $entry['timestamp'];
 			}
 		}
 
@@ -253,13 +251,84 @@ class Payment_Activity extends Date_Range {
 		return $parsed_post;
 	}
 
+	/**
+	 * Aggregate the number and payment amounts of a group of Vendor Payments and Reimbursement Requests.
+	 *
+	 * @param array $payment_posts The group of posts to aggregate.
+	 *
+	 * @return array
+	 */
+	protected function derive_totals_from_payment_events( array $payment_posts ) {
+		$data = array(
+			'vendor_payment_count'              => 0,
+			'vendor_payment_amount_by_currency' => array(),
+			'reimbursement_count'               => 0,
+			'reimbursement_amount_by_currency'  => array(),
+		);
 
-	protected function timestamp_within_date_range( $timestamp ) {
-		try {
-			$date = new \DateTime( $timestamp );
-		} catch ( \Exception $e ) {
-			return false;
+		$data_groups = array(
+			'requests' => $data,
+			'payments' => $data,
+		);
+
+		$currencies = array();
+
+		foreach ( $payment_posts as $payment ) {
+			if ( ! isset( $payment['currency'] ) || ! $payment['currency'] ) {
+				continue;
+			}
+
+			if ( ! in_array( $payment['currency'], $currencies, true ) ) {
+				$data_groups['requests']['vendor_payment_amount_by_currency'][ $payment['currency'] ] = 0;
+				$data_groups['requests']['reimbursement_amount_by_currency'][ $payment['currency'] ]  = 0;
+				$data_groups['payments']['vendor_payment_amount_by_currency'][ $payment['currency'] ] = 0;
+				$data_groups['payments']['reimbursement_amount_by_currency'][ $payment['currency'] ]  = 0;
+				$currencies[]                                                                         = $payment['currency'];
+			}
+
+			switch ( $payment['post_type'] ) {
+				case 'wcp_payment_request' :
+					if ( $this->timestamp_within_date_range( $payment['timestamp_approved'] ) ) {
+						$data_groups['requests']['vendor_payment_count'] ++;
+						$data_groups['requests']['vendor_payment_amount_by_currency'][ $payment['currency'] ] += floatval( $payment['amount'] );
+					}
+					if ( $this->timestamp_within_date_range( $payment['timestamp_payment_pending'] ) ) {
+						$data_groups['payments']['vendor_payment_count'] ++;
+						$data_groups['payments']['vendor_payment_amount_by_currency'][ $payment['currency'] ] += floatval( $payment['amount'] );
+					}
+					break;
+
+				case 'wcb_reimbursement' :
+					if ( $this->timestamp_within_date_range( $payment['timestamp_approved'] ) ) {
+						$data_groups['requests']['reimbursement_count'] ++;
+						$data_groups['requests']['reimbursement_amount_by_currency'][ $payment['currency'] ] += floatval( $payment['amount'] );
+					}
+					if ( $this->timestamp_within_date_range( $payment['timestamp_payment_pending'] ) ) {
+						$data_groups['payments']['reimbursement_count'] ++;
+						$data_groups['payments']['reimbursement_amount_by_currency'][ $payment['currency'] ] += floatval( $payment['amount'] );
+					}
+					break;
+			}
 		}
+
+		foreach ( $data_groups as &$group ) {
+			ksort( $group['vendor_payment_amount_by_currency'] );
+			ksort( $group['reimbursement_amount_by_currency'] );
+		}
+
+		return $data_groups;
+	}
+
+	/**
+	 * Check if a given Unix timestamp is within the date range set in the report.
+	 *
+	 * @param int $timestamp The Unix timestamp to test.
+	 *
+	 * @return bool True if within the date range.
+	 */
+	protected function timestamp_within_date_range( $timestamp ) {
+		$date = new \DateTime();
+		$date->setTimestamp( $timestamp );
 
 		if ( $date >= $this->start_date && $date <= $this->end_date ) {
 			return true;
@@ -294,7 +363,7 @@ class Payment_Activity extends Date_Range {
 		}
 		*/
 
-		$report = new self( '2017-10-01', '2017-10-05', 0, array( 'cache_data' => false ) );
+		$report = new self( '2017-08-01', '2017-09-30', 0, array( 'cache_data' => false ) );
 
 		echo '<pre>';
 		var_dump( $report->error->get_error_messages() );
