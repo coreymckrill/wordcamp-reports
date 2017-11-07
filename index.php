@@ -235,3 +235,25 @@ function register_shortcodes() {
 }
 
 add_action( 'plugins_loaded', __NAMESPACE__ . '\register_shortcodes' );
+
+/**
+ * Register endpoints for reports that have a REST API interface.
+ *
+ * @return void
+ */
+function register_rest_endpoints() {
+	$namespace = 'wordcamp-reports/v1';
+
+	$report_classes = get_report_classes();
+
+	foreach ( $report_classes as $class ) {
+		if ( property_exists( $class, 'rest_base' ) && method_exists( $class, 'rest_callback' ) ) {
+			register_rest_route( $namespace, '/' . $class::$rest_base, array(
+				'methods'  => array( 'GET' ),
+				'callback' => array( $class, 'rest_callback' ),
+			) );
+		}
+	}
+}
+
+add_action( 'rest_api_init', __NAMESPACE__ . '\register_rest_endpoints' );

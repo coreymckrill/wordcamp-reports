@@ -168,4 +168,26 @@ abstract class Base {
 
 		return true;
 	}
+
+	/**
+	 * Prepare report data for a REST response.
+	 *
+	 * This takes an arbitrary data value and wraps it in a WP REST Response object along with additional
+	 * information about the report.
+	 *
+	 * @param mixed $data                       The data that will go in the `data` parameter of the response.
+	 * @param array $additional_response_params Additional top-level parameters to add to the response.
+	 *
+	 * @return \WP_REST_Response
+	 */
+	protected static function prepare_rest_response( $data, array $additional_response_params = array() ) {
+		$response_data = array_merge( array(
+			'report_name'        => static::$name,
+			'report_description' => static::$description,
+		), $additional_response_params );
+
+		$response_data['data'] = $data;
+
+		return new \WP_REST_Response( $response_data );
+	}
 }

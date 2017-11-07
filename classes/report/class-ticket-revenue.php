@@ -30,6 +30,11 @@ class Ticket_Revenue extends Date_Range {
 	public static $description = 'A summary of WordCamp ticket revenue during a given time period.';
 
 	/**
+	 * @var string
+	 */
+	public static $rest_base = 'ticket-revenue';
+
+	/**
 	 * @var int The ID of the WordCamp post for this report.
 	 */
 	public $wordcamp_id = 0;
@@ -419,5 +424,35 @@ class Ticket_Revenue extends Date_Range {
 		}
 
 		include Reports\get_views_dir_path() . 'report/ticket-revenue.php';
+	}
+
+	/**
+	 * Prepare a REST response version of the report output.
+	 *
+	 * @param \WP_REST_Request $request The REST request.
+	 *
+	 * @return \WP_REST_Response
+	 */
+	public static function rest_callback( \WP_REST_Request $request ) {
+		$params = wp_parse_args( $request->get_params(), array(
+			'start_date'  => '',
+			'end_date'    => '',
+			'wordcamp_id' => 0,
+		) );
+
+		$options = array(
+			'earliest_start' => new \DateTime( '2007-11-17' ), // Date of first WordCamp in the system.
+		);
+
+		$report = new self( $params['start_date'], $params['end_date'], $params['wordcamp_id'], $options );
+
+		if ( $report->error->get_error_messages() ) {
+			$response = self::prepare_rest_response( $report->error->errors );
+			$response->set_status( 400 );
+		} else {
+			$response = self::prepare_rest_response( $report->get_data() );
+		}
+
+		return $response;
 	}
 }
