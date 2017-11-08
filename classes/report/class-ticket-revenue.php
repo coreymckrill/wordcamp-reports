@@ -16,20 +16,35 @@ use WordCamp\Reports;
 class Ticket_Revenue extends Date_Range {
 	/**
 	 * Report name.
+	 *
+	 * @var string
 	 */
 	public static $name = 'Ticket Revenue';
 
 	/**
 	 * Report slug.
+	 *
+	 * @var string
 	 */
 	public static $slug = 'ticket-revenue';
 
 	/**
 	 * Report description.
+	 *
+	 * @var string
 	 */
 	public static $description = 'A summary of WordCamp ticket revenue during a given time period.';
 
 	/**
+	 * Report group.
+	 *
+	 * @var string
+	 */
+	public static $group = 'finance';
+
+	/**
+	 * REST route for this report.
+	 *
 	 * @var string
 	 */
 	public static $rest_base = 'ticket-revenue';

@@ -17,18 +17,31 @@ use WordCamp\Budgets_Dashboard\Sponsor_Invoices as WCBD_Sponsor_Invoices;
 class Sponsor_Invoices extends Date_Range {
 	/**
 	 * Report name.
+	 *
+	 * @var string
 	 */
 	public static $name = 'Sponsor Invoices';
 
 	/**
 	 * Report slug.
+	 *
+	 * @var string
 	 */
 	public static $slug = 'sponsor-invoices';
 
 	/**
 	 * Report description.
+	 *
+	 * @var string
 	 */
 	public static $description = 'A summary of sponsor invoice activity during a given time period.';
+
+	/**
+	 * Report group.
+	 *
+	 * @var string
+	 */
+	public static $group = 'finance';
 
 	/**
 	 * @var int The ID of the WordCamp post for this report.

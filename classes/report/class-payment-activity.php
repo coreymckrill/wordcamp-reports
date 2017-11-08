@@ -17,18 +17,31 @@ use WordCamp\Budgets_Dashboard\Reimbursement_Requests;
 class Payment_Activity extends Date_Range {
 	/**
 	 * Report name.
+	 *
+	 * @var string
 	 */
 	public static $name = 'Payment Activity';
 
 	/**
 	 * Report slug.
+	 *
+	 * @var string
 	 */
 	public static $slug = 'payment-activity';
 
 	/**
 	 * Report description.
+	 *
+	 * @var string
 	 */
 	public static $description = 'A summary of payment activity during a given time period.';
+
+	/**
+	 * Report group.
+	 *
+	 * @var string
+	 */
+	public static $group = 'finance';
 
 	/**
 	 * @var int The ID of the WordCamp post for this report.

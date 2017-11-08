@@ -18,18 +18,31 @@ use WordCamp\Reports\Utilities;
 abstract class Base {
 	/**
 	 * Report name.
+	 *
+	 * @var string
 	 */
 	public static $name = '';
 
 	/**
 	 * Report slug.
+	 *
+	 * @var string
 	 */
 	public static $slug = '';
 
 	/**
 	 * Report description.
+	 *
+	 * @var string
 	 */
 	public static $description = '';
+
+	/**
+	 * Report group.
+	 *
+	 * @var string
+	 */
+	public static $group = '';
 
 	/**
 	 * Additional report parameters.

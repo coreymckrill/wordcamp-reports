@@ -19,21 +19,36 @@ use WordCamp\Reports\Utilities;
 class WordCamp_Status extends Date_Range {
 	/**
 	 * Report name.
+	 *
+	 * @var string
 	 */
 	public static $name = 'WordCamp Status';
 
 	/**
 	 * Report slug.
+	 *
+	 * @var string
 	 */
 	public static $slug = 'wordcamp-status';
 
 	/**
 	 * Report description.
+	 *
+	 * @var string
 	 */
 	public static $description = 'A summary of WordCamp status changes during a given time period.';
 
 	/**
+	 * Report group.
+	 *
+	 * @var string
+	 */
+	public static $group = 'wordcamp';
+
+	/**
 	 * Shortcode tag for outputting the public report form.
+	 *
+	 * @var string
 	 */
 	public static $shortcode_tag = 'wordcamp_status_report';
 

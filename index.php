@@ -103,6 +103,42 @@ function get_report_classes() {
 	);
 }
 
+
+function get_report_groups( $classes = array() ) {
+	$groups = [
+		'finance'  => [
+			'label'   => 'Finances',
+			'classes' => [],
+		],
+		'wordcamp'  => [
+			'label'   => 'WordCamps',
+			'classes' => [],
+		],
+		'meetup'  => [
+			'label'   => 'Meetups',
+			'classes' => [],
+		],
+		'misc'  => [
+			'label'   => 'Miscellaneous',
+			'classes' => [],
+		],
+	];
+
+	if ( empty( $classes ) ) {
+		$classes = get_report_classes();
+	}
+
+	foreach ( $classes as $class ) {
+		if ( property_exists( $class, 'group' ) && array_key_exists( $class::$group, $groups ) ) {
+			$groups[ $class::$group ]['classes'][] = $class;
+		} else {
+			$groups['misc']['classes'][] = $class;
+		}
+	}
+
+	return $groups;
+}
+
 /**
  * Load files that don't get autoloaded.
  *
@@ -155,6 +191,8 @@ function render_page() {
 	if ( $report_class && in_array( $report_class, $reports_with_admin, true ) ) {
 		$report_class::render_admin_page();
 	} else {
+		$report_groups = get_report_groups( $reports_with_admin );
+
 		include get_views_dir_path() . 'admin.php';
 	}
 }
