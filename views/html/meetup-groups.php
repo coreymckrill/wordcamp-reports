@@ -35,7 +35,7 @@ defined( 'WPINC' ) || die();
 				</tbody>
 			</table>
 		</li>
-		<li>Total group members: <?php echo number_format_i18n( $data['total_members'] ); ?></li>
+		<li>Total group members (non-unique): <?php echo number_format_i18n( $data['total_members'] ); ?></li>
 		<li>
 			Total group members by country:<br />
 			<table class="striped">
@@ -81,7 +81,7 @@ defined( 'WPINC' ) || die();
 					</tbody>
 				</table>
 			</li>
-			<li>Total group members that joined: <?php echo number_format_i18n( $data['joined_members'] ); ?></li>
+			<li>Total group members that joined (non-unique): <?php echo number_format_i18n( $data['joined_members'] ); ?></li>
 			<li>
 				Total group members that joined by country:<br />
 				<table class="striped">
