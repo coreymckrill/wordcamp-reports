@@ -31,7 +31,7 @@ defined( 'WPINC' ) || die();
 	<ul class="ul-disc">
 		<?php if ( $invoices_sent > 0 ) : ?>
 			<li>
-				Invoices sent: <?php echo esc_html( $invoices_sent ); ?>
+				Invoices sent: <?php echo number_format_i18n( $invoices_sent ); ?>
 				<?php if ( ! empty( $invoice_amounts ) ) : ?>
 					<ul class="ul-disc">
 						<?php foreach ( $invoice_amounts as $currency => $amount ) : ?>
@@ -43,7 +43,7 @@ defined( 'WPINC' ) || die();
 		<?php endif; ?>
 		<?php if ( $payments_received > 0 ) : ?>
 			<li>
-				Payments received: <?php echo esc_html( $payments_received ); ?>
+				Payments received: <?php echo number_format_i18n( $payments_received ); ?>
 				<?php if ( ! empty( $payment_amounts ) ) : ?>
 					<ul class="ul-disc">
 						<?php foreach ( $payment_amounts as $currency => $amount ) : ?>
