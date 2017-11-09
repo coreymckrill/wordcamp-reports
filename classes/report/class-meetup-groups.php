@@ -65,6 +65,12 @@ class Meetup_Groups extends Date_Range {
 			'pro_join_date_max' => $this->end_date->getTimestamp() * 1000, // Meetup API uses milliseconds :/
 		) );
 
+		if ( is_wp_error( $all_groups ) ) {
+			$this->error = $this->merge_errors( $this->error, $all_groups );
+
+			return array();
+		}
+
 		$joined_groups = array_filter( $all_groups, function( $group ) {
 			$join_date = new \DateTime();
 			$join_date->setTimestamp( intval( $group['pro_join_date'] / 1000 ) ); // Meetup API uses milliseconds :/
@@ -76,34 +82,15 @@ class Meetup_Groups extends Date_Range {
 			return false;
 		} );
 
-		$new_group_count = array_reduce( $joined_groups, function( $carry, $item ) use ( $meetup ) {
-			$route = '2/events';
-			$args  = array(
-				'group_id' => $item['id'],
-				'status'   => 'past',
-				'time'     => '0,' . $item['pro_join_date'],
-			);
-
-			$previous_event_count = $meetup->get_total_count( $route, $args );
-
-			if ( $previous_event_count > 0 ) {
-				$carry ++;
-			}
-
-			return $carry;
-		}, 0 );
-
-		$total_member_count = array_reduce( $all_groups, function( $carry, $item ) {
-			$carry += absint( $item['member_count'] );
-
-			return $carry;
-		}, 0 );
-
 		$data = array(
-			'total_groups'  => count( $all_groups ),
-			'joined_groups' => count( $joined_groups ),
-			'new_groups'    => $new_group_count,
-			'total_members' => $total_member_count,
+			'total_groups'              => count( $all_groups ),
+			'total_groups_by_country'   => $this->count_groups_by_country( $all_groups ),
+			'total_members'             => $this->count_members( $all_groups ),
+			'total_members_by_country'  => $this->count_group_members_by_country( $all_groups ),
+			'joined_groups'             => count( $joined_groups ),
+			'joined_groups_by_country'  => $this->count_groups_by_country( $joined_groups ),
+			'joined_members'            => $this->count_members( $joined_groups ),
+			'joined_members_by_country' => $this->count_group_members_by_country( $joined_groups ),
 		);
 
 		// Maybe cache the data.
@@ -113,12 +100,99 @@ class Meetup_Groups extends Date_Range {
 	}
 
 	/**
+	 * From a list of groups, count how many total members there are.
+	 *
+	 * @param array $groups Meetup groups.
+	 *
+	 * @return int The number of total members.
+	 */
+	protected function count_members( $groups ) {
+		return array_reduce( $groups, function( $carry, $item ) {
+			$carry += absint( $item['member_count'] );
+
+			return $carry;
+		}, 0 );
+	}
+
+	/**
+	 * From a list of groups, count how many there are in each country.
+	 *
+	 * @param array $groups Meetup groups.
+	 *
+	 * @return array An associative array of country keys and group count values, sorted high to low.
+	 */
+	protected function count_groups_by_country( $groups ) {
+		$counts = array_reduce( $groups, function( $carry, $item ) {
+			$country = $item['country'];
+
+			if ( ! isset( $carry[ $country ] ) ) {
+				$carry[ $country ] = 0;
+			}
+
+			$carry[ $country ] ++;
+
+			return $carry;
+		}, array() );
+
+		arsort( $counts );
+
+		return $counts;
+	}
+
+	/**
+	 * From a list of groups, count how many total group members there are in each country.
+	 *
+	 * @param array $groups Meetup groups.
+	 *
+	 * @return array An associative array of country keys and group member count values, sorted high to low.
+	 */
+	protected function count_group_members_by_country( $groups ) {
+		$counts = array_reduce( $groups, function( $carry, $item ) {
+			$country = $item['country'];
+
+			if ( ! isset( $carry[ $country ] ) ) {
+				$carry[ $country ] = 0;
+			}
+
+			$carry[ $country ] += absint( $item['member_count'] );
+
+			return $carry;
+		}, array() );
+
+		arsort( $counts );
+
+		return $counts;
+	}
+
+	/**
+	 * Render an HTML version of the report output.
+	 *
+	 * @return void
+	 */
+	public function render_html() {
+		$data = $this->get_data();
+		$start_date = $this->start_date;
+		$end_date   = $this->end_date;
+
+		if ( ! empty( $this->error->get_error_messages() ) ) {
+			?>
+			<div class="notice notice-error">
+				<?php foreach ( $this->error->get_error_messages() as $message ) : ?>
+					<?php echo wpautop( wp_kses_post( $message ) ); ?>
+				<?php endforeach; ?>
+			</div>
+			<?php
+		} else {
+			include Reports\get_views_dir_path() . 'html/meetup-groups.php';
+		}
+	}
+
+	/**
 	 * Render the page for this report in the WP Admin.
 	 *
 	 * @return void
 	 */
 	public static function render_admin_page() {
-		/*
 		$start_date  = filter_input( INPUT_POST, 'start-date' );
 		$end_date    = filter_input( INPUT_POST, 'end-date' );
 		$action      = filter_input( INPUT_POST, 'action' );
@@ -138,12 +212,7 @@ class Meetup_Groups extends Date_Range {
 				$end_date = $report->end_date->format( 'Y-m-d' );
 			}
 		}
-		*/
 
-		$report = new self( '2017-01-01', '2017-12-31', array( 'cache_data' => false ) );
-		var_dump( $report->get_data() );
-		var_dump( $report->error->get_error_messages() );
-
-		//include Reports\get_views_dir_path() . 'report/meetup-groups.php';
+		include Reports\get_views_dir_path() . 'report/meetup-groups.php';
 	}
 }
