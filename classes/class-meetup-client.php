@@ -319,7 +319,7 @@ class Meetup_Client {
 	 *
 	 * @return int|\WP_Error
 	 */
-	public function get_total_count( $route, array $args = array() ) {
+	public function get_result_count( $route, array $args = array() ) {
 		$request_url = $this->api_base . $route;
 
 		if ( ! empty( $args ) ) {
