@@ -203,12 +203,15 @@ class Meetup_Client {
 		$remaining = absint( wp_remote_retrieve_header( $response, 'x-ratelimit-remaining' ) );
 		$period    = absint( wp_remote_retrieve_header( $response, 'x-ratelimit-reset' ) );
 
-		if ( $remaining > 1 ) {
+		if ( $remaining > 2 ) {
 			return;
 		}
 
-		// Add a little extra to the reset period.
-		usleep( $period * 1000 + 100 );
+		if ( $period < 2 ) {
+			$period = 2;
+		}
+
+		sleep( $period );
 	}
 
 	/**
