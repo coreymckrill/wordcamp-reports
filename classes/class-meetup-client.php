@@ -44,7 +44,7 @@ class Meetup_Client {
 	}
 
 	/**
-	 * Send a request to the Meetup API and return the response.
+	 * Send a paginated request to the Meetup API and return the aggregated response.
 	 *
 	 * This automatically paginates requests and will repeat requests to ensure all results are retrieved.
 	 * It also tries to account for API request limits and throttles to avoid getting a limit error.
@@ -53,7 +53,7 @@ class Meetup_Client {
 	 *
 	 * @return array|\WP_Error The results of the request.
 	 */
-	protected function send_request( $request_url ) {
+	protected function send_paginated_request( $request_url ) {
 		$data = array();
 
 		$request_url = add_query_arg( array(
@@ -100,6 +100,49 @@ class Meetup_Client {
 		}
 
 		return $data;
+	}
+
+	/**
+	 * Send a single request to the Meetup API and return the total number of results available.
+	 *
+	 * @param string $request_url The API endpoint URL to send the request to.
+	 *
+	 * @return int|\WP_Error
+	 */
+	protected function send_total_count_request( $request_url ) {
+		$count = 0;
+
+		$request_url = add_query_arg( array(
+			// We're only interested in the headers, so we don't need to receive more than one result.
+			'page' => 1,
+		), $request_url );
+
+		$request_url = $this->sign_request_url( $request_url );
+
+		$response = wcorg_redundant_remote_get( $request_url );
+
+		if ( 200 === wp_remote_retrieve_response_code( $response ) ) {
+			$count_header = wp_remote_retrieve_header( $response, 'X-Total-Count' );
+
+			if ( $count_header ) {
+				$count = absint( $count_header );
+			} else {
+				$this->error->add(
+					'unexpected_response_data',
+					'The API response did not provide a total count value.'
+				);
+			}
+		} else {
+			$this->handle_error_response( $response );
+		}
+
+		$this->maybe_throttle( $response );
+
+		if ( ! empty( $this->error->get_error_messages() ) ) {
+			return $this->error;
+		}
+
+		return $count;
 	}
 
 	/**
@@ -207,7 +250,7 @@ class Meetup_Client {
 			$request_url = add_query_arg( $args, $request_url );
 		}
 
-		return $this->send_request( $request_url );
+		return $this->send_paginated_request( $request_url );
 	}
 
 	/**
@@ -233,7 +276,7 @@ class Meetup_Client {
 
 			$request_url = add_query_arg( $query_args, $url_base );
 
-			$data = $this->send_request( $request_url );
+			$data = $this->send_paginated_request( $request_url );
 
 			if ( is_wp_error( $data ) ) {
 				return $data;
@@ -261,6 +304,25 @@ class Meetup_Client {
 			$request_url = add_query_arg( $args, $request_url );
 		}
 
-		return $this->send_request( $request_url );
+		return $this->send_paginated_request( $request_url );
+	}
+
+	/**
+	 * Find out how many results are available for a particular request.
+	 *
+	 * @param string $route The Meetup.com API route to send a request to.
+	 * @param array  $args  Optional. Additional request parameters.
+	 *                      See https://www.meetup.com/meetup_api/docs/
+	 *
+	 * @return int|\WP_Error
+	 */
+	public function get_total_count( $route, array $args = array() ) {
+		$request_url = $this->api_base . $route;
+
+		if ( ! empty( $args ) ) {
+			$request_url = add_query_arg( $args, $request_url );
+		}
+
+		return $this->send_total_count_request( $request_url );
 	}
 }
