@@ -61,7 +61,7 @@ $asterisk2 = false;
 		<tr>
 			<td></td>
 			<td>Total: </td>
-			<td class="number"><?php echo number_format_i18n( $requests['total_amount_converted'] ); ?></td>
+			<td class="number total"><?php echo number_format_i18n( $requests['total_amount_converted'] ); ?></td>
 		</tr>
 		</tbody>
 	</table>
@@ -113,7 +113,7 @@ $asterisk2 = false;
 		<tr>
 			<td></td>
 			<td>Total: </td>
-			<td class="number"><?php echo number_format_i18n( $payments['total_amount_converted'] ); ?></td>
+			<td class="number total"><?php echo number_format_i18n( $payments['total_amount_converted'] ); ?></td>
 		</tr>
 		</tbody>
 	</table>

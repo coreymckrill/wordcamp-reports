@@ -7,3 +7,7 @@
 td.number {
 	text-align: right;
 }
+
+td.total {
+	font-weight: bold;
+}
