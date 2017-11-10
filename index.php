@@ -208,6 +208,13 @@ function enqueue_admin_assets( $hook_suffix ) {
 		return;
 	}
 
+	wp_enqueue_style(
+		'admin-common',
+		get_assets_url() . 'css/admin-common.css',
+		array(),
+		CSS_VERSION
+	);
+
 	$report       = filter_input( INPUT_GET, 'report', FILTER_SANITIZE_STRING );
 	$report_class = get_report_class_by_slug( $report );
 

@@ -37,7 +37,7 @@ $asterisk2 = false;
 		<?php endif; ?>
 	</ul>
 
-	<table class="widefat striped">
+	<table class="striped widefat but-not-too-wide">
 		<thead>
 		<tr>
 			<td>Currency</td>
@@ -89,7 +89,7 @@ $asterisk2 = false;
 		<?php endif; ?>
 	</ul>
 
-	<table class="striped">
+	<table class="striped widefat but-not-too-wide">
 		<thead>
 		<tr>
 			<td>Currency</td>

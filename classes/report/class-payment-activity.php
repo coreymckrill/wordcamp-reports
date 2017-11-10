@@ -377,7 +377,7 @@ class Payment_Activity extends Date_Range {
 							$this->merge_errors( $this->error, $conversion );
 						}
 					} else {
-						$group['converted_net_revenue'][ $currency ] = $conversion->USD;
+						$group['converted_amounts'][ $currency ] = $conversion->USD;
 					}
 				}
 			}
