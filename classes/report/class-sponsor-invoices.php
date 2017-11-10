@@ -318,12 +318,21 @@ class Sponsor_Invoices extends Date_Range {
 		$converted_amounts = array();
 
 		foreach ( $amount_by_currency as $currency => $amount ) {
-			$converted_amounts[ $currency ] = 0;
+			if ( 'USD' === $currency ) {
+				$converted_amounts[ $currency ] = $amount;
+			} else {
+				$converted_amounts[ $currency ] = 0;
 
-			$conversion = $this->xrt->convert( $amount, $currency, $this->end_date->format( 'Y-m-d' ) );
+				$conversion = $this->xrt->convert( $amount, $currency, $this->end_date->format( 'Y-m-d' ) );
 
-			if ( ! is_wp_error( $conversion ) ) {
-				$converted_amounts[ $currency ] = $conversion->USD;
+				if ( is_wp_error( $conversion ) ) {
+					// Unsupported currencies are ok, but other errors should be surfaced.
+					if ( 'unknown_currency' !== $conversion->get_error_code() ) {
+						$this->merge_errors( $this->error, $conversion );
+					}
+				} else {
+					$converted_amounts[ $currency ] = $conversion->USD;
+				}
 			}
 		}
 
