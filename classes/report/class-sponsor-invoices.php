@@ -54,6 +54,11 @@ class Sponsor_Invoices extends Date_Range {
 	public $wordcamp_site_id = 0;
 
 	/**
+	 * @var Reports\Currency_XRT_Client Utility to handle currency conversion.
+	 */
+	protected $xrt = null;
+
+	/**
 	 * Sponsor_Invoices constructor.
 	 *
 	 * @param string $start_date  The start of the date range for the report.
@@ -71,6 +76,8 @@ class Sponsor_Invoices extends Date_Range {
 			$this->wordcamp_id      = $wordcamp_id;
 			$this->wordcamp_site_id = get_wordcamp_site_id( get_post( $wordcamp_id ) );
 		}
+
+		$this->xrt = new Reports\Currency_XRT_Client();
 	}
 
 	/**
@@ -308,9 +315,27 @@ class Sponsor_Invoices extends Date_Range {
 
 		ksort( $amount_by_currency );
 
+		$converted_amounts = array();
+
+		foreach ( $amount_by_currency as $currency => $amount ) {
+			$converted_amounts[ $currency ] = 0;
+
+			$conversion = $this->xrt->convert( $amount, $currency, $this->end_date->format( 'Y-m-d' ) );
+
+			if ( ! is_wp_error( $conversion ) ) {
+				$converted_amounts[ $currency ] = $conversion->USD;
+			}
+		}
+
+		$total_amount_converted = array_reduce( $converted_amounts, function( $carry, $item ) {
+			return $carry + floatval( $item );
+		}, 0 );
+
 		return array(
-			'total_count'        => $total_count,
-			'amount_by_currency' => $amount_by_currency,
+			'total_count'            => $total_count,
+			'amount_by_currency'     => $amount_by_currency,
+			'converted_amounts'      => $converted_amounts,
+			'total_amount_converted' => $total_amount_converted,
 		);
 	}
 
@@ -337,11 +362,9 @@ class Sponsor_Invoices extends Date_Range {
 		$start_date = $this->start_date;
 		$end_date   = $this->end_date;
 
-		$wordcamp_name     = ( $this->wordcamp_site_id ) ? get_wordcamp_name( $this->wordcamp_site_id ) : '';
-		$invoices_sent     = $data['invoices']['total_count'];
-		$invoice_amounts   = $data['invoices']['amount_by_currency'];
-		$payments_received = $data['payments']['total_count'];
-		$payment_amounts   = $data['payments']['amount_by_currency'];
+		$wordcamp_name = ( $this->wordcamp_site_id ) ? get_wordcamp_name( $this->wordcamp_site_id ) : '';
+		$invoices      = $data['invoices'];
+		$payments      = $data['payments'];
 
 		if ( ! empty( $this->error->get_error_messages() ) ) {
 			?>

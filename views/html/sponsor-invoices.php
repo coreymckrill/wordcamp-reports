@@ -9,10 +9,8 @@ defined( 'WPINC' ) || die();
 /** @var \DateTime $start_date */
 /** @var \DateTime $end_date */
 /** @var string $wordcamp_name */
-/** @var int $invoices_sent */
-/** @var array $invoice_amounts */
-/** @var int $payments_received */
-/** @var array $payment_amounts */
+/** @var array $invoices */
+/** @var array $payments */
 ?>
 
 <h3>
@@ -27,33 +25,69 @@ defined( 'WPINC' ) || die();
 	<?php endif; ?>
 </h3>
 
-<?php if ( $invoices_sent > 0 || $payments_received > 0 ) : ?>
-	<ul class="ul-disc">
-		<?php if ( $invoices_sent > 0 ) : ?>
+<?php if ( $invoices['total_count'] > 0 || $payments['total_count'] > 0 ) : ?>
+	<ul>
+		<?php if ( $invoices['total_count'] > 0 ) : ?>
+			<li>Invoices sent: <?php echo number_format_i18n( $invoices['total_count'] ); ?></li>
 			<li>
-				Invoices sent: <?php echo number_format_i18n( $invoices_sent ); ?>
-				<?php if ( ! empty( $invoice_amounts ) ) : ?>
-					<ul class="ul-disc">
-						<?php foreach ( $invoice_amounts as $currency => $amount ) : ?>
-							<li><?php echo esc_html( $currency ); ?>: <?php echo number_format_i18n( $amount ) ?></li>
-						<?php endforeach; ?>
-					</ul>
-				<?php endif; ?>
+				Amount invoiced:
+				<table class="striped">
+					<thead>
+					<tr>
+						<td>Currency</td>
+						<td>Amount</td>
+						<td>Estimated Value in USD *</td>
+					</tr>
+					</thead>
+					<tbody>
+					<?php foreach ( array_keys( $invoices['amount_by_currency'] ) as $currency ) : ?>
+						<tr>
+							<td><?php echo esc_html( $currency ); ?></td>
+							<td><?php echo number_format_i18n( $invoices['amount_by_currency'][ $currency ] ); ?></td>
+							<td><?php echo number_format_i18n( $invoices['converted_amounts'][ $currency ] ); ?></td>
+						</tr>
+					<?php endforeach; ?>
+						<tr>
+							<td></td>
+							<td>Total: </td>
+							<td><?php echo number_format_i18n( $invoices['total_amount_converted'] ); ?></td>
+						</tr>
+					</tbody>
+				</table>
 			</li>
 		<?php endif; ?>
-		<?php if ( $payments_received > 0 ) : ?>
+		<?php if ( $payments['total_count'] > 0 ) : ?>
+			<li>Payments received: <?php echo number_format_i18n( $payments['total_count'] ); ?></li>
 			<li>
-				Payments received: <?php echo number_format_i18n( $payments_received ); ?>
-				<?php if ( ! empty( $payment_amounts ) ) : ?>
-					<ul class="ul-disc">
-						<?php foreach ( $payment_amounts as $currency => $amount ) : ?>
-							<li><?php echo esc_html( $currency ); ?>: <?php echo number_format_i18n( $amount ) ?></li>
-						<?php endforeach; ?>
-					</ul>
-				<?php endif; ?>
+				Amount received:
+				<table class="striped">
+					<thead>
+					<tr>
+						<td>Currency</td>
+						<td>Amount</td>
+						<td>Estimated Value in USD *</td>
+					</tr>
+					</thead>
+					<tbody>
+					<?php foreach ( array_keys( $payments['amount_by_currency'] ) as $currency ) : ?>
+						<tr>
+							<td><?php echo esc_html( $currency ); ?></td>
+							<td><?php echo number_format_i18n( $payments['amount_by_currency'][ $currency ] ); ?></td>
+							<td><?php echo number_format_i18n( $payments['converted_amounts'][ $currency ] ); ?></td>
+						</tr>
+					<?php endforeach; ?>
+					<tr>
+						<td></td>
+						<td>Total: </td>
+						<td><?php echo number_format_i18n( $payments['total_amount_converted'] ); ?></td>
+					</tr>
+					</tbody>
+				</table>
 			</li>
 		<?php endif; ?>
 	</ul>
+
+	<p class="description">* Estimate based on exchange rates for <?php echo esc_html( $end_date->format( 'M jS, Y' ) ); ?></p>
 <?php else : ?>
 	<p>
 		No data
