@@ -44,7 +44,12 @@ defined( 'WPINC' ) || die();
 						<tr>
 							<td><?php echo esc_html( $currency ); ?></td>
 							<td><?php echo number_format_i18n( $invoices['amount_by_currency'][ $currency ] ); ?></td>
-							<td><?php echo number_format_i18n( $invoices['converted_amounts'][ $currency ] ); ?></td>
+							<td>
+								<?php echo number_format_i18n( $invoices['converted_amounts'][ $currency ] ); ?>
+								<?php if ( $invoices['amount_by_currency'][ $currency ] > 0 && $invoices['converted_amounts'][ $currency ] === 0 ) : ?>
+									**
+								<?php endif; ?>
+							</td>
 						</tr>
 					<?php endforeach; ?>
 						<tr>
@@ -73,7 +78,12 @@ defined( 'WPINC' ) || die();
 						<tr>
 							<td><?php echo esc_html( $currency ); ?></td>
 							<td><?php echo number_format_i18n( $payments['amount_by_currency'][ $currency ] ); ?></td>
-							<td><?php echo number_format_i18n( $payments['converted_amounts'][ $currency ] ); ?></td>
+							<td>
+								<?php echo number_format_i18n( $payments['converted_amounts'][ $currency ] ); ?>
+								<?php if ( $invoices['amount_by_currency'][ $currency ] > 0 && $invoices['converted_amounts'][ $currency ] === 0 ) : ?>
+									**
+								<?php endif; ?>
+							</td>
 						</tr>
 					<?php endforeach; ?>
 					<tr>
@@ -88,6 +98,7 @@ defined( 'WPINC' ) || die();
 	</ul>
 
 	<p class="description">* Estimate based on exchange rates for <?php echo esc_html( $end_date->format( 'M jS, Y' ) ); ?></p>
+	<p class="description">** Currency exchange rate not available.</p>
 <?php else : ?>
 	<p>
 		No data
