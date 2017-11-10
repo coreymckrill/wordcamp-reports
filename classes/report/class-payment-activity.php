@@ -54,6 +54,11 @@ class Payment_Activity extends Date_Range {
 	public $wordcamp_site_id = 0;
 
 	/**
+	 * @var Reports\Currency_XRT_Client Utility to handle currency conversion.
+	 */
+	protected $xrt = null;
+
+	/**
 	 * Payment_Activity constructor.
 	 *
 	 * @param string $start_date  The start of the date range for the report.
@@ -71,6 +76,8 @@ class Payment_Activity extends Date_Range {
 			$this->wordcamp_id      = $wordcamp_id;
 			$this->wordcamp_site_id = get_wordcamp_site_id( get_post( $wordcamp_id ) );
 		}
+
+		$this->xrt = new Reports\Currency_XRT_Client();
 	}
 
 	/**
@@ -296,6 +303,8 @@ class Payment_Activity extends Date_Range {
 			'vendor_payment_amount_by_currency' => array(),
 			'reimbursement_amount_by_currency'  => array(),
 			'total_amount_by_currency'          => array(),
+			'converted_amounts'                 => array(),
+			'total_amount_converted'            => 0,
 		);
 
 		$data_groups = array(
@@ -353,6 +362,29 @@ class Payment_Activity extends Date_Range {
 			ksort( $group['vendor_payment_amount_by_currency'] );
 			ksort( $group['reimbursement_amount_by_currency'] );
 			ksort( $group['total_amount_by_currency'] );
+
+			foreach ( $group['total_amount_by_currency'] as $currency => $amount ) {
+				if ( 'USD' === $currency ) {
+					$group['converted_amounts'][ $currency ] = $amount;
+				} else {
+					$group['converted_amounts'][ $currency ] = 0;
+
+					$conversion = $this->xrt->convert( $amount, $currency, $this->end_date->format( 'Y-m-d' ) );
+
+					if ( is_wp_error( $conversion ) ) {
+						// Unsupported currencies are ok, but other errors should be surfaced.
+						if ( 'unknown_currency' !== $conversion->get_error_code() ) {
+							$this->merge_errors( $this->error, $conversion );
+						}
+					} else {
+						$group['converted_net_revenue'][ $currency ] = $conversion->USD;
+					}
+				}
+			}
+
+			$group['total_amount_converted'] = array_reduce( $group['converted_amounts'], function( $carry, $item ) {
+				return $carry + floatval( $item );
+			}, 0 );
 		}
 
 		return $data_groups;

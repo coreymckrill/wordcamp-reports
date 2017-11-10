@@ -11,6 +11,8 @@ defined( 'WPINC' ) || die();
 /** @var string $wordcamp_name */
 /** @var array $requests */
 /** @var array $payments */
+
+$asterisk2 = false;
 ?>
 
 <?php if ( $requests['vendor_payment_count'] || $requests['reimbursement_count'] ) : ?>
@@ -35,20 +37,32 @@ defined( 'WPINC' ) || die();
 		<?php endif; ?>
 	</ul>
 
-	<table class="striped">
+	<table class="widefat striped">
 		<thead>
 		<tr>
 			<td>Currency</td>
 			<td>Total Amount Requested</td>
+			<td>Estimated Value in USD *</td>
 		</tr>
 		</thead>
 		<tbody>
 		<?php foreach ( array_keys( $requests['total_amount_by_currency'] ) as $currency ) : ?>
 			<tr>
 				<td><?php echo esc_html( $currency ); ?></td>
-				<td><?php echo number_format_i18n( $requests['total_amount_by_currency'][ $currency ] ); ?></td>
+				<td class="number"><?php echo number_format_i18n( $requests['total_amount_by_currency'][ $currency ] ); ?></td>
+				<td class="number">
+					<?php echo number_format_i18n( $requests['converted_amounts'][ $currency ] ); ?>
+					<?php if ( $requests['total_amount_by_currency'][ $currency ] > 0 && $requests['converted_amounts'][ $currency ] === 0 ) : $asterisk2 = true; ?>
+						**
+					<?php endif; ?>
+				</td>
 			</tr>
 		<?php endforeach; ?>
+		<tr>
+			<td></td>
+			<td>Total: </td>
+			<td class="number"><?php echo number_format_i18n( $requests['total_amount_converted'] ); ?></td>
+		</tr>
 		</tbody>
 	</table>
 <?php endif; ?>
@@ -80,20 +94,37 @@ defined( 'WPINC' ) || die();
 		<tr>
 			<td>Currency</td>
 			<td>Total Amount Requested</td>
+			<td>Estimated Value in USD *</td>
 		</tr>
 		</thead>
 		<tbody>
 		<?php foreach ( array_keys( $payments['total_amount_by_currency'] ) as $currency ) : ?>
 			<tr>
 				<td><?php echo esc_html( $currency ); ?></td>
-				<td><?php echo number_format_i18n( $payments['total_amount_by_currency'][ $currency ] ); ?></td>
+				<td class="number"><?php echo number_format_i18n( $payments['total_amount_by_currency'][ $currency ] ); ?></td>
+				<td class="number">
+					<?php echo number_format_i18n( $payments['converted_amounts'][ $currency ] ); ?>
+					<?php if ( $payments['total_amount_by_currency'][ $currency ] > 0 && $payments['converted_amounts'][ $currency ] === 0 ) : $asterisk2 = true; ?>
+						**
+					<?php endif; ?>
+				</td>
 			</tr>
 		<?php endforeach; ?>
+		<tr>
+			<td></td>
+			<td>Total: </td>
+			<td class="number"><?php echo number_format_i18n( $payments['total_amount_converted'] ); ?></td>
+		</tr>
 		</tbody>
 	</table>
 <?php endif; ?>
 
-<?php if ( ! $requests['vendor_payment_count'] && ! $requests['reimbursement_count'] && ! $payments['vendor_payment_count'] && ! $payments['reimbursement_count'] ) : ?>
+<?php if ( $requests['vendor_payment_count'] || $requests['reimbursement_count'] || $payments['vendor_payment_count'] || $payments['reimbursement_count'] ) : ?>
+	<p class="description">* Estimate based on exchange rates for <?php echo esc_html( $end_date->format( 'M jS, Y' ) ); ?></p>
+	<?php if ( $asterisk2 ) : ?>
+		<p class="description">** Currency exchange rate not available.</p>
+	<?php endif; ?>
+<?php else : ?>
 	<p>
 		No data
 		<?php if ( $wordcamp_name ) : ?>
