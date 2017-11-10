@@ -42,6 +42,7 @@ defined( 'WPINC' ) || die();
 				<td>Discounts</td>
 				<td>Refunds</td>
 				<td>Net Revenue</td>
+				<td>Estimated Value in USD *</td>
 			</tr>
 		</thead>
 		<tbody>
@@ -52,10 +53,27 @@ defined( 'WPINC' ) || die();
 					<td><?php echo number_format_i18n( $wpcs['discounts_by_currency'][ $currency ] ); ?></td>
 					<td><?php echo number_format_i18n( $wpcs['amount_refunded_by_currency'][ $currency ] ); ?></td>
 					<td><?php echo number_format_i18n( $wpcs['net_revenue_by_currency'][ $currency ] ); ?></td>
+					<td>
+						<?php echo number_format_i18n( $wpcs['converted_net_revenue'][ $currency ] ); ?>
+						<?php if ( $wpcs['net_revenue_by_currency'][ $currency ] > 0 && $wpcs['converted_net_revenue'][ $currency ] === 0 ) : ?>
+							**
+						<?php endif; ?>
+					</td>
 				</tr>
 			<?php endforeach; ?>
+			<tr>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td>Total: </td>
+				<td><?php echo number_format_i18n( $wpcs['total_converted_revenue'] ); ?></td>
+			</tr>
 		</tbody>
 	</table>
+
+	<p class="description">* Estimate based on exchange rates for <?php echo esc_html( $end_date->format( 'M jS, Y' ) ); ?></p>
+	<p class="description">** Currency exchange rate not available.</p>
 <?php endif; ?>
 
 <?php if ( ! empty( $non_wpcs['net_revenue_by_currency'] ) ) : ?>
@@ -84,6 +102,7 @@ defined( 'WPINC' ) || die();
 			<td>Discounts</td>
 			<td>Refunds</td>
 			<td>Net Revenue</td>
+			<td>Estimated Value in USD *</td>
 		</tr>
 		</thead>
 		<tbody>
@@ -94,10 +113,27 @@ defined( 'WPINC' ) || die();
 				<td><?php echo number_format_i18n( $non_wpcs['discounts_by_currency'][ $currency ] ); ?></td>
 				<td><?php echo number_format_i18n( $non_wpcs['amount_refunded_by_currency'][ $currency ] ); ?></td>
 				<td><?php echo number_format_i18n( $non_wpcs['net_revenue_by_currency'][ $currency ] ); ?></td>
+				<td>
+					<?php echo number_format_i18n( $non_wpcs['converted_net_revenue'][ $currency ] ); ?>
+					<?php if ( $non_wpcs['net_revenue_by_currency'][ $currency ] > 0 && $non_wpcs['converted_net_revenue'][ $currency ] === 0 ) : ?>
+						**
+					<?php endif; ?>
+				</td>
 			</tr>
 		<?php endforeach; ?>
+		<tr>
+			<td></td>
+			<td></td>
+			<td></td>
+			<td></td>
+			<td>Total: </td>
+			<td><?php echo number_format_i18n( $non_wpcs['total_converted_revenue'] ); ?></td>
+		</tr>
 		</tbody>
 	</table>
+
+	<p class="description">* Estimate based on exchange rates for <?php echo esc_html( $end_date->format( 'M jS, Y' ) ); ?></p>
+	<p class="description">** Currency exchange rate not available.</p>
 <?php endif; ?>
 
 <?php if ( ! empty( $wpcs['net_revenue_by_currency'] ) && ! empty( $non_wpcs['net_revenue_by_currency'] ) ) : ?>
@@ -126,6 +162,7 @@ defined( 'WPINC' ) || die();
 			<td>Discounts</td>
 			<td>Refunds</td>
 			<td>Net Revenue</td>
+			<td>Estimated Value in USD *</td>
 		</tr>
 		</thead>
 		<tbody>
@@ -136,10 +173,27 @@ defined( 'WPINC' ) || die();
 				<td><?php echo number_format_i18n( $total['discounts_by_currency'][ $currency ] ); ?></td>
 				<td><?php echo number_format_i18n( $total['amount_refunded_by_currency'][ $currency ] ); ?></td>
 				<td><?php echo number_format_i18n( $total['net_revenue_by_currency'][ $currency ] ); ?></td>
+				<td>
+					<?php echo number_format_i18n( $total['converted_net_revenue'][ $currency ] ); ?>
+					<?php if ( $total['net_revenue_by_currency'][ $currency ] > 0 && $total['converted_net_revenue'][ $currency ] === 0 ) : ?>
+						**
+					<?php endif; ?>
+				</td>
 			</tr>
 		<?php endforeach; ?>
+		<tr>
+			<td></td>
+			<td></td>
+			<td></td>
+			<td></td>
+			<td>Total: </td>
+			<td><?php echo number_format_i18n( $total['total_converted_revenue'] ); ?></td>
+		</tr>
 		</tbody>
 	</table>
+
+	<p class="description">* Estimate based on exchange rates for <?php echo esc_html( $end_date->format( 'M jS, Y' ) ); ?></p>
+	<p class="description">** Currency exchange rate not available.</p>
 <?php endif; ?>
 
 <?php if ( empty( $total['net_revenue_by_currency'] ) ) : ?>

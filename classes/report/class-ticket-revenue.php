@@ -60,6 +60,11 @@ class Ticket_Revenue extends Date_Range {
 	public $wordcamp_site_id = 0;
 
 	/**
+	 * @var Reports\Currency_XRT_Client Utility to handle currency conversion.
+	 */
+	protected $xrt = null;
+
+	/**
 	 * Ticket_Revenue constructor.
 	 *
 	 * @param string $start_date  The start of the date range for the report.
@@ -86,6 +91,8 @@ class Ticket_Revenue extends Date_Range {
 		}
 
 		parent::__construct( $start_date, $end_date, $options );
+
+		$this->xrt = new Reports\Currency_XRT_Client();
 	}
 
 	/**
@@ -296,6 +303,8 @@ class Ticket_Revenue extends Date_Range {
 			'tickets_refunded'            => 0,
 			'amount_refunded_by_currency' => array(),
 			'net_revenue_by_currency'     => array(),
+			'converted_net_revenue'       => array(),
+			'total_converted_revenue'     => 0,
 		);
 
 		$data_groups = array(
@@ -360,6 +369,29 @@ class Ticket_Revenue extends Date_Range {
 			ksort( $group['discounts_by_currency'] );
 			ksort( $group['amount_refunded_by_currency'] );
 			ksort( $group['net_revenue_by_currency'] );
+
+			foreach ( $group['net_revenue_by_currency'] as $currency => $amount ) {
+				if ( 'USD' === $currency ) {
+					$group['converted_net_revenue'][ $currency ] = $amount;
+				} else {
+					$group['converted_net_revenue'][ $currency ] = 0;
+
+					$conversion = $this->xrt->convert( $amount, $currency, $this->end_date->format( 'Y-m-d' ) );
+
+					if ( is_wp_error( $conversion ) ) {
+						// Unsupported currencies are ok, but other errors should be surfaced.
+						if ( 'unknown_currency' !== $conversion->get_error_code() ) {
+							$this->merge_errors( $this->error, $conversion );
+						}
+					} else {
+						$group['converted_net_revenue'][ $currency ] = $conversion->USD;
+					}
+				}
+			}
+
+			$group['total_converted_revenue'] = array_reduce( $group['converted_net_revenue'], function( $carry, $item ) {
+				return $carry + floatval( $item );
+			}, 0 );
 		}
 
 		return $data_groups;

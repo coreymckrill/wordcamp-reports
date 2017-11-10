@@ -9,6 +9,9 @@ defined( 'WPINC' ) || die();
 /**
  * Class Currency_XRT_Client
  *
+ * Get historical exchange rates for the major currencies. Designed to be able to use different API sources for
+ * the exchange rate data. Initially built using the Fixer API (fixer.io). "XRT" = "exchange rate".
+ *
  * @package WordCamp\Reports
  */
 class Currency_XRT_Client {
