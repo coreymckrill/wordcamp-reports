@@ -72,12 +72,12 @@ class Payment_Activity extends Date_Range {
 	public function __construct( $start_date, $end_date, $wordcamp_id = 0, array $options = array() ) {
 		parent::__construct( $start_date, $end_date, $options );
 
+		$this->xrt = new Reports\Currency_XRT_Client();
+
 		if ( $wordcamp_id && $this->validate_wordcamp_id( $wordcamp_id ) ) {
 			$this->wordcamp_id      = $wordcamp_id;
 			$this->wordcamp_site_id = get_wordcamp_site_id( get_post( $wordcamp_id ) );
 		}
-
-		$this->xrt = new Reports\Currency_XRT_Client();
 	}
 
 	/**
