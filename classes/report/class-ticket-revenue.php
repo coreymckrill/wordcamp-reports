@@ -76,23 +76,14 @@ class Ticket_Revenue extends Date_Range {
 	 * }
 	 */
 	public function __construct( $start_date, $end_date, $wordcamp_id = 0, array $options = array() ) {
+		parent::__construct( $start_date, $end_date, $options );
+
+		$this->xrt = new Reports\Currency_XRT_Client();
+
 		if ( $wordcamp_id && $this->validate_wordcamp_id( $wordcamp_id ) ) {
 			$this->wordcamp_id      = $wordcamp_id;
 			$this->wordcamp_site_id = get_wordcamp_site_id( get_post( $wordcamp_id ) );
 		}
-
-		if ( ! $this->wordcamp_site_id ) {
-			// Limit the date interval if the report is not for a specific camp. Retrieving all ticket sales activity
-			// across the network for a long date interval is very memory intensive.
-			// @todo Maybe find a workaround for this limitation?
-			$options = wp_parse_args( $options, array(
-				'max_interval' => new \DateInterval( 'P2M' ), // 2 months. See http://php.net/manual/en/dateinterval.construct.php.,
-			) );
-		}
-
-		parent::__construct( $start_date, $end_date, $options );
-
-		$this->xrt = new Reports\Currency_XRT_Client();
 	}
 
 	/**
@@ -126,6 +117,10 @@ class Ticket_Revenue extends Date_Range {
 		if ( is_array( $data ) ) {
 			return $data;
 		}
+
+		// This script is a memory hog for date intervals larger than ~2 months.
+		// @todo Maybe find a way to run this without having to hack the memory limit.
+		ini_set( 'memory_limit', '512M' );
 
 		$events = $this->get_indexed_camptix_events( array(
 			'Attendee status has been changed to publish',
@@ -200,18 +195,12 @@ class Ticket_Revenue extends Date_Range {
 		}
 
 		$sql = "
-			SELECT id, timestamp, blog_id, object_id, message
+			SELECT blog_id, object_id, message
 			FROM $table_name
 		" . $where;
 
-		$query   = $wpdb->prepare( $sql, $where_values );
-		$results = $wpdb->get_results( $query, ARRAY_A );
-
-		// Key the events by the index ID.
-		$events = array_combine(
-			wp_list_pluck( $results, 'id' ),
-			$results
-		);
+		$query  = $wpdb->prepare( $sql, $where_values );
+		$events = $wpdb->get_results( $query, ARRAY_A );
 
 		return $events;
 	}
@@ -219,19 +208,19 @@ class Ticket_Revenue extends Date_Range {
 	/**
 	 * Group log event ticket IDs by their blog ID.
 	 *
-	 * @param array $tickets An array of CampTix log events/tickets.
+	 * @param array $events An array of CampTix log events/tickets.
 	 *
 	 * @return array
 	 */
-	protected function sort_indexed_ticket_ids_by_site( $tickets ) {
+	protected function sort_indexed_ticket_ids_by_site( $events ) {
 		$sorted = array();
 
-		foreach ( $tickets as $ticket ) {
-			if ( ! isset( $sorted[ $ticket['blog_id'] ] ) ) {
-				$sorted[ $ticket['blog_id'] ] = array();
+		foreach ( $events as $event ) {
+			if ( ! isset( $sorted[ $event['blog_id'] ] ) ) {
+				$sorted[ $event['blog_id'] ] = array();
 			}
 
-			$sorted[ $ticket['blog_id'] ][] = $ticket['object_id'];
+			$sorted[ $event['blog_id'] ][] = $event['object_id'];
 		}
 
 		$sorted = array_map( 'array_unique', $sorted );
@@ -249,7 +238,7 @@ class Ticket_Revenue extends Date_Range {
 	 */
 	protected function get_ticket_details( $blog_id, array $ticket_ids ) {
 		$ticket_details = array();
-		$currency          = '';
+		$currency       = '';
 
 		switch_to_blog( $blog_id );
 
@@ -259,27 +248,16 @@ class Ticket_Revenue extends Date_Range {
 			$currency = $options['currency'];
 		}
 
-		$ticket_args = array(
-			'post_type'      => 'tix_attendee',
-			'post_status'    => 'any',
-			'posts_per_page' => 9999,
-			'post__in'       => $ticket_ids,
-			'nopaging'       => true,
-		);
-
-		$tickets = get_posts( $ticket_args );
-
-		foreach ( $tickets as $ticket ) {
-			$ticket_details[ $blog_id . '_' . $ticket->ID ] = array(
+		foreach ( $ticket_ids as $ticket_id ) {
+			$ticket_details[ $blog_id . '_' . $ticket_id ] = array(
 				'blog_id'          => $blog_id,
-				'ticket_id'        => $ticket->ID,
+				'ticket_id'        => $ticket_id,
 				'currency'         => $currency,
-				'method'           => $ticket->tix_payment_method,
-				'full_price'       => $ticket->tix_ticket_price,
-				'discounted_price' => $ticket->tix_ticket_discounted_price,
+				'full_price'       => get_post_meta( $ticket_id, 'tix_ticket_price', true ),
+				'discounted_price' => get_post_meta( $ticket_id, 'tix_ticket_discounted_price', true ),
 			);
 
-			clean_post_cache( $ticket );
+			clean_post_cache( $ticket_id );
 		}
 
 		restore_current_blog();
@@ -316,7 +294,7 @@ class Ticket_Revenue extends Date_Range {
 		$wpcs_supported_currencies = self::get_wpcs_currencies();
 		$currencies                = array();
 
-		foreach ( $events as $event_id => $event ) {
+		foreach ( $events as $event ) {
 			$details = $ticket_details[ $event['blog_id'] . '_' . $event['object_id'] ];
 
 			if ( ! isset( $details['currency'] ) ) {
@@ -459,6 +437,7 @@ class Ticket_Revenue extends Date_Range {
 		if ( 'run-report' === $action && wp_verify_nonce( $nonce, 'run-report' ) ) {
 			$options = array(
 				'earliest_start' => new \DateTime( '2007-11-17' ), // Date of first WordCamp in the system.
+				'max_interval'   => new \DateInterval( 'P1Y' ), // 1 year. See http://php.net/manual/en/dateinterval.construct.php.
 				'cache_data'     => false, // WP Admin is low traffic and more trusted, so turn off caching.
 			);
 
@@ -489,6 +468,7 @@ class Ticket_Revenue extends Date_Range {
 
 		$options = array(
 			'earliest_start' => new \DateTime( '2007-11-17' ), // Date of first WordCamp in the system.
+			'max_interval'   => new \DateInterval( 'P1Y' ), // 1 year. See http://php.net/manual/en/dateinterval.construct.php.
 		);
 
 		$report = new self( $params['start_date'], $params['end_date'], $params['wordcamp_id'], $options );
