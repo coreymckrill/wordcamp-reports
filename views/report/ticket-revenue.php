@@ -44,6 +44,10 @@ use WordCamp\Reports\Report;
 				<th scope="row"><label for="wordcamp-id">WordCamp ID (optional)</label></th>
 				<td><input type="number" id="wordcamp-id" name="wordcamp-id" value="<?php echo esc_attr( $wordcamp_id ) ?>" /></td>
 			</tr>
+			<tr>
+				<th scope="row"><label for="refresh">Refresh results</label></th>
+				<td><input type="checkbox" id="refresh" name="refresh" /></td>
+			</tr>
 			</tbody>
 		</table>
 

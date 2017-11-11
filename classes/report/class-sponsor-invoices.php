@@ -397,6 +397,7 @@ class Sponsor_Invoices extends Date_Range {
 		$start_date  = filter_input( INPUT_POST, 'start-date' );
 		$end_date    = filter_input( INPUT_POST, 'end-date' );
 		$wordcamp_id = filter_input( INPUT_POST, 'wordcamp-id' );
+		$refresh     = filter_input( INPUT_POST, 'refresh', FILTER_VALIDATE_BOOLEAN );
 		$action      = filter_input( INPUT_POST, 'action' );
 		$nonce       = filter_input( INPUT_POST, self::$slug . '-nonce' );
 
@@ -405,8 +406,11 @@ class Sponsor_Invoices extends Date_Range {
 		if ( 'run-report' === $action && wp_verify_nonce( $nonce, 'run-report' ) ) {
 			$options = array(
 				'earliest_start' => new \DateTime( '2007-11-17' ), // Date of first WordCamp in the system.
-				'cache_data'     => false, // WP Admin is low traffic and more trusted, so turn off caching.
 			);
+
+			if ( $refresh ) {
+				$options['cache_data'] = false;
+			}
 
 			$report = new self( $start_date, $end_date, $wordcamp_id, $options );
 
