@@ -158,9 +158,15 @@ abstract class Date_Range extends Base {
 	protected function get_cache_expiration() {
 		$expiration = parent::get_cache_expiration();
 
-		// Expire the cache sooner if the data includes the current day.
-		if ( $this->end_date >= date_create( 'now' ) ) {
+		$now = new \DateTimeImmutable( 'now' );
+		$now->setTime( 0, 0, 0 ); // Beginning of the current day.
+
+		if ( $this->end_date >= $now ) {
+			// Expire the cache sooner if the data includes the current day.
 			$expiration = HOUR_IN_SECONDS;
+		} elseif ( $this->end_date->diff( $now )->y > 0 ) {
+			// Keep the cache longer if the end of the date range is over a year ago.
+			$expiration = MONTH_IN_SECONDS;
 		}
 
 		return $expiration;
