@@ -96,7 +96,7 @@ class Payment_Activity extends Date_Range {
 	}
 
 	/**
-	 * Query, parse, and compile the data for the report.
+	 * Query and parse the data for the report.
 	 *
 	 * @return array
 	 */
@@ -130,7 +130,8 @@ class Payment_Activity extends Date_Range {
 		}
 
 		$payment_posts = array_map( array( $this, 'parse_payment_post_log' ), $payment_posts );
-		$payment_posts = array_filter( $payment_posts, function( $payment ) {
+
+		$data = array_filter( $payment_posts, function( $payment ) {
 			if ( ! $this->timestamp_within_date_range( $payment['timestamp_approved'] ) && ! $this->timestamp_within_date_range( $payment['timestamp_paid'] ) ) {
 				return false;
 			}
@@ -138,12 +139,23 @@ class Payment_Activity extends Date_Range {
 			return true;
 		} );
 
-		$data = $this->derive_totals_from_payment_events( $payment_posts );
-
 		// Maybe cache the data.
 		$this->maybe_cache_data( $data );
 
 		return $data;
+	}
+
+	/**
+	 * Compile the report data into results.
+	 *
+	 * @param array $data The data to compile.
+	 *
+	 * @return array
+	 */
+	public function compile_report_data( array $data ) {
+		$compiled_data = $this->derive_totals_from_payment_events( $data );
+
+		return $compiled_data;
 	}
 
 	/**
@@ -414,7 +426,7 @@ class Payment_Activity extends Date_Range {
 	 * @return void
 	 */
 	public function render_html() {
-		$data       = $this->get_data();
+		$data       = $this->compile_report_data( $this->get_data() );
 		$start_date = $this->start_date;
 		$end_date   = $this->end_date;
 

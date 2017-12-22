@@ -76,11 +76,20 @@ abstract class Base {
 	}
 
 	/**
-	 * Query, parse, and compile the data for the report.
+	 * Query and parse the data for the report.
 	 *
 	 * @return array
 	 */
 	public abstract function get_data();
+
+	/**
+	 * Compile the report data into results.
+	 *
+	 * @param array $data The data to compile.
+	 *
+	 * @return array
+	 */
+	public abstract function compile_report_data( array $data );
 
 	/**
 	 * Generate a cache key.

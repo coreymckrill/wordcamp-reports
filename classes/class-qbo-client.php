@@ -245,8 +245,8 @@ class QBO_Client {
 	protected function get_transactions( $type, array $filter = array(), array $filter_input = array() ) {
 		$allowed_types = array(
 			// Type => Fields to select.
-			'Invoice' => 'Id, MetaData, TxnDate, CurrencyRef, LinkedTxn, TotalAmt, Balance',
-			'Payment' => 'Id, MetaData, TxnDate, CurrencyRef, Line, TotalAmt, UnappliedAmt',
+			'Invoice' => 'Id, TxnDate, CurrencyRef, LinkedTxn, TotalAmt, Balance',
+			'Payment' => 'Id, TxnDate, CurrencyRef, Line, TotalAmt, UnappliedAmt',
 		);
 
 		if ( ! array_key_exists( $type, $allowed_types ) ) {

@@ -102,7 +102,7 @@ class Ticket_Revenue extends Date_Range {
 	}
 
 	/**
-	 * Query, parse, and compile the data for the report.
+	 * Query and parse the data for the report.
 	 *
 	 * @return array
 	 */
@@ -122,12 +122,19 @@ class Ticket_Revenue extends Date_Range {
 		// @todo Maybe find a way to run this without having to hack the memory limit.
 		ini_set( 'memory_limit', '512M' );
 
-		$events = $this->get_indexed_camptix_events( array(
+		$data = $this->get_indexed_camptix_events( array(
 			'Attendee status has been changed to publish',
 			'Attendee status has been changed to refund',
 		) );
 
-		array_walk( $events, function( &$event ) {
+		$tickets_by_site = $this->sort_indexed_ticket_ids_by_site( $data );
+		$ticket_details  = array();
+
+		foreach ( $tickets_by_site as $blog_id => $ticket_ids ) {
+			$ticket_details = array_merge( $ticket_details, $this->get_ticket_details( $blog_id, $ticket_ids ) );
+		}
+
+		array_walk( $data, function( &$event ) use ( $ticket_details ) {
 			if ( false !== strpos( $event['message'], 'publish' ) ) {
 				$event['type'] = 'purchase';
 				unset( $event['message'] );
@@ -135,21 +142,31 @@ class Ticket_Revenue extends Date_Range {
 				$event['type'] = 'refund';
 				unset( $event['message'] );
 			}
+
+			if ( isset( $ticket_details[ $event['blog_id'] . '_' . $event['object_id'] ] ) ) {
+				$event['details'] = $ticket_details[ $event['blog_id'] . '_' . $event['object_id'] ];
+			} else {
+				$event['details'] = array();
+			}
 		} );
-
-		$tickets_by_site = $this->sort_indexed_ticket_ids_by_site( $events );
-		$ticket_details  = array();
-
-		foreach ( $tickets_by_site as $blog_id => $ticket_ids ) {
-			$ticket_details = array_merge( $ticket_details, $this->get_ticket_details( $blog_id, $ticket_ids ) );
-		}
-
-		$data = $this->derive_revenue_from_ticket_events( $events, $ticket_details );
 
 		// Maybe cache the data.
 		$this->maybe_cache_data( $data );
 
 		return $data;
+	}
+
+	/**
+	 * Compile the report data into results.
+	 *
+	 * @param array $data The data to compile.
+	 *
+	 * @return array
+	 */
+	public function compile_report_data( array $data ) {
+		$compiled_data = $this->derive_revenue_from_ticket_events( $data );
+
+		return $compiled_data;
 	}
 
 	/**
@@ -195,7 +212,7 @@ class Ticket_Revenue extends Date_Range {
 		}
 
 		$sql = "
-			SELECT blog_id, object_id, message
+			SELECT blog_id, object_id, timestamp, message
 			FROM $table_name
 		" . $where;
 
@@ -250,11 +267,9 @@ class Ticket_Revenue extends Date_Range {
 
 		foreach ( $ticket_ids as $ticket_id ) {
 			$ticket_details[ $blog_id . '_' . $ticket_id ] = array(
-				'blog_id'          => $blog_id,
-				'ticket_id'        => $ticket_id,
 				'currency'         => $currency,
-				'full_price'       => get_post_meta( $ticket_id, 'tix_ticket_price', true ),
-				'discounted_price' => get_post_meta( $ticket_id, 'tix_ticket_discounted_price', true ),
+				'full_price'       => floatval( get_post_meta( $ticket_id, 'tix_ticket_price', true ) ),
+				'discounted_price' => floatval( get_post_meta( $ticket_id, 'tix_ticket_discounted_price', true ) ),
 			);
 
 			clean_post_cache( $ticket_id );
@@ -266,14 +281,13 @@ class Ticket_Revenue extends Date_Range {
 	}
 
 	/**
-	 * Apply ticket details to each ticket event and aggregate to revenue totals.
+	 * Aggregate revenue totals from a list of ticket events.
 	 *
-	 * @param array $events         Ticket events.
-	 * @param array $ticket_details Ticket details.
+	 * @param array $events The ticket events.
 	 *
 	 * @return array
 	 */
-	protected function derive_revenue_from_ticket_events( array $events, array $ticket_details ) {
+	protected function derive_revenue_from_ticket_events( array $events ) {
 		$initial_data = array(
 			'tickets_sold'                => 0,
 			'gross_revenue_by_currency'   => array(),
@@ -295,7 +309,7 @@ class Ticket_Revenue extends Date_Range {
 		$currencies                = array();
 
 		foreach ( $events as $event ) {
-			$details = $ticket_details[ $event['blog_id'] . '_' . $event['object_id'] ];
+			$details = $event['details'];
 
 			if ( ! isset( $details['currency'] ) ) {
 				continue;
@@ -322,22 +336,22 @@ class Ticket_Revenue extends Date_Range {
 			switch ( $event['type'] ) {
 				case 'purchase' :
 					$data_groups[ $group ]['tickets_sold'] ++;
-					$data_groups[ $group ]['gross_revenue_by_currency'][ $details['currency'] ] += floatval( $details['full_price'] );
-					$data_groups[ $group ]['discounts_by_currency'][ $details['currency'] ]     += floatval( $details['full_price'] ) - floatval( $details['discounted_price'] );
-					$data_groups[ $group ]['net_revenue_by_currency'][ $details['currency'] ]   += floatval( $details['discounted_price'] );
+					$data_groups[ $group ]['gross_revenue_by_currency'][ $details['currency'] ] += $details['full_price'];
+					$data_groups[ $group ]['discounts_by_currency'][ $details['currency'] ]     += $details['full_price'] - $details['discounted_price'];
+					$data_groups[ $group ]['net_revenue_by_currency'][ $details['currency'] ]   += $details['discounted_price'];
 					$data_groups['total']['tickets_sold'] ++;
-					$data_groups['total']['gross_revenue_by_currency'][ $details['currency'] ] += floatval( $details['full_price'] );
-					$data_groups['total']['discounts_by_currency'][ $details['currency'] ]     += floatval( $details['full_price'] ) - floatval( $details['discounted_price'] );
-					$data_groups['total']['net_revenue_by_currency'][ $details['currency'] ]   += floatval( $details['discounted_price'] );
+					$data_groups['total']['gross_revenue_by_currency'][ $details['currency'] ] += $details['full_price'];
+					$data_groups['total']['discounts_by_currency'][ $details['currency'] ]     += $details['full_price'] - $details['discounted_price'];
+					$data_groups['total']['net_revenue_by_currency'][ $details['currency'] ]   += $details['discounted_price'];
 					break;
 
 				case 'refund' :
 					$data_groups[ $group ]['tickets_refunded'] ++;
-					$data_groups[ $group ]['amount_refunded_by_currency'][ $details['currency'] ] += floatval( $details['discounted_price'] );
-					$data_groups[ $group ]['net_revenue_by_currency'][ $details['currency'] ]     -= floatval( $details['discounted_price'] );
+					$data_groups[ $group ]['amount_refunded_by_currency'][ $details['currency'] ] += $details['discounted_price'];
+					$data_groups[ $group ]['net_revenue_by_currency'][ $details['currency'] ]     -= $details['discounted_price'];
 					$data_groups['total']['tickets_refunded'] ++;
-					$data_groups['total']['amount_refunded_by_currency'][ $details['currency'] ] += floatval( $details['discounted_price'] );
-					$data_groups['total']['net_revenue_by_currency'][ $details['currency'] ]     -= floatval( $details['discounted_price'] );
+					$data_groups['total']['amount_refunded_by_currency'][ $details['currency'] ] += $details['discounted_price'];
+					$data_groups['total']['net_revenue_by_currency'][ $details['currency'] ]     -= $details['discounted_price'];
 					break;
 			}
 		}
@@ -381,6 +395,8 @@ class Ticket_Revenue extends Date_Range {
 	 * Any camp using a currency supported by the CampTix PayPal payment gateway is assumed to be using the
 	 * WPCS PayPal account for ticket sales.
 	 *
+	 * @todo Adjust this when the Stripe gateway becomes available.
+	 *
 	 * Wrapper method to help minimize coupling with the CampTix plugin.
 	 *
 	 * @return array
@@ -398,7 +414,7 @@ class Ticket_Revenue extends Date_Range {
 	 * @return void
 	 */
 	public function render_html() {
-		$data       = $this->get_data();
+		$data       = $this->compile_report_data( $this->get_data() );
 		$start_date = $this->start_date;
 		$end_date   = $this->end_date;
 

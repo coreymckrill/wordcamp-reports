@@ -145,7 +145,7 @@ class WordCamp_Status extends Date_Range {
 	}
 
 	/**
-	 * Query, parse, and compile the data for the report.
+	 * Query and parse the data for the report.
 	 *
 	 * @return array
 	 */
@@ -235,6 +235,35 @@ class WordCamp_Status extends Date_Range {
 		$this->maybe_cache_data( $data );
 
 		return $data;
+	}
+
+	/**
+	 * Compile the report data into results.
+	 *
+	 * @param array $data The data to compile.
+	 *
+	 * @return array
+	 */
+	public function compile_report_data( array $data ) {
+		$compiled_data = array();
+
+		$compiled_data['active_camps'] = array_filter( $data, function( $wordcamp ) {
+			if ( ! empty( $wordcamp['logs'] ) ) {
+				return true;
+			}
+
+			return false;
+		} );
+
+		$compiled_data['inactive_camps'] = array_filter( $data, function( $wordcamp ) {
+			if ( empty( $wordcamp['logs'] ) ) {
+				return true;
+			}
+
+			return false;
+		} );
+
+		return $compiled_data;
 	}
 
 	/**
@@ -364,28 +393,14 @@ class WordCamp_Status extends Date_Range {
 	 * @return void
 	 */
 	public function render_html() {
-		$data       = $this->get_data();
+		$data       = $this->compile_report_data( $this->get_data() );
 		$start_date = $this->start_date;
 		$end_date   = $this->end_date;
 		$status     = $this->status;
 
-		$active_camps = array_filter( $data, function( $wordcamp ) {
-			if ( ! empty( $wordcamp['logs'] ) ) {
-				return true;
-			}
-
-			return false;
-		} );
-
-		$inactive_camps = array_filter( $data, function( $wordcamp ) {
-			if ( empty( $wordcamp['logs'] ) ) {
-				return true;
-			}
-
-			return false;
-		} );
-
-		$statuses = Utilities\get_all_wordcamp_statuses();
+		$active_camps   = $data['active_camps'];
+		$inactive_camps = $data['inactive_camps'];
+		$statuses       = Utilities\get_all_wordcamp_statuses();
 
 		if ( ! empty( $this->error->get_error_messages() ) ) {
 			?>

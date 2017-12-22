@@ -96,7 +96,7 @@ class Sponsor_Invoices extends Date_Range {
 	}
 
 	/**
-	 * Query, parse, and compile the data for the report.
+	 * Query and parse the data for the report.
 	 *
 	 * @return array
 	 */
@@ -112,10 +112,7 @@ class Sponsor_Invoices extends Date_Range {
 			return $data;
 		}
 
-		$data = array(
-			'invoices' => $this->parse_transaction_stats( array() ),
-			'payments' => $this->parse_transaction_stats( array() ),
-		);
+		$data = array();
 
 		// If a particular WordCamp is specified, check to see if it has invoices.
 		$allowed_invoice_ids = array();
@@ -177,14 +174,35 @@ class Sponsor_Invoices extends Date_Range {
 				return $return;
 			} );
 
-			$data['invoices'] = $this->parse_transaction_stats( $qbo_invoices );
-			$data['payments'] = $this->parse_transaction_stats( $qbo_payments );
+			$data = array_merge(
+				array_values( $qbo_invoices ),
+				array_values( $qbo_payments )
+			);
 		}
 
 		// Maybe cache the data.
 		$this->maybe_cache_data( $data );
 
 		return $data;
+	}
+
+	/**
+	 * Compile the report data into results.
+	 *
+	 * @param array $data The data to compile.
+	 *
+	 * @return array
+	 */
+	public function compile_report_data( array $data ) {
+		$invoices = $this->filter_transactions_by_type( $data, 'Invoice' );
+		$payments = $this->filter_transactions_by_type( $data, 'Payment' );
+
+		$compiled_data = array(
+			'invoices' => $this->parse_transaction_stats( $invoices ),
+			'payments' => $this->parse_transaction_stats( $payments ),
+		);
+
+		return $compiled_data;
 	}
 
 	/**
@@ -206,6 +224,13 @@ class Sponsor_Invoices extends Date_Range {
 			wp_list_pluck( $invoices, 'Id' ),
 			$invoices
 		);
+
+		// Add a type column.
+		$invoices = array_map( function( $invoice ) {
+			$invoice['Type'] = 'Invoice';
+
+			return $invoice;
+		}, $invoices );
 
 		return $invoices;
 	}
@@ -287,7 +312,32 @@ class Sponsor_Invoices extends Date_Range {
 			$payments
 		);
 
+		// Add a type column.
+		$payments = array_map( function( $payment ) {
+			$payment['Type'] = 'Payment';
+
+			return $payment;
+		}, $payments );
+
 		return $payments;
+	}
+
+	/**
+	 * Out of an array of transactions, generate an array of only one type of transaction.
+	 *
+	 * @param array  $transactions The transactions to filter.
+	 * @param string $type         The type to filter for.
+	 *
+	 * @return array
+	 */
+	protected function filter_transactions_by_type( array $transactions, $type ) {
+		return array_filter( $transactions, function( $transaction ) use ( $type ) {
+			if ( $type === $transaction['type'] ) {
+				return true;
+			}
+
+			return false;
+		} );
 	}
 
 	/**
@@ -367,7 +417,7 @@ class Sponsor_Invoices extends Date_Range {
 	 * @return void
 	 */
 	public function render_html() {
-		$data       = $this->get_data();
+		$data       = $this->compile_report_data( $this->get_data() );
 		$start_date = $this->start_date;
 		$end_date   = $this->end_date;
 

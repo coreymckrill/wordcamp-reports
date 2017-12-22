@@ -43,7 +43,7 @@ class Meetup_Groups extends Date_Range {
 	public static $group = 'meetup';
 
 	/**
-	 * Query, parse, and compile the data for the report.
+	 * Query and parse the data for the report.
 	 *
 	 * @return array
 	 */
@@ -61,17 +61,31 @@ class Meetup_Groups extends Date_Range {
 
 		$meetup = new Reports\Meetup_Client();
 
-		$all_groups = $meetup->get_groups( array(
+		$data = $meetup->get_groups( array(
 			'pro_join_date_max' => $this->end_date->getTimestamp() * 1000, // Meetup API uses milliseconds :/
 		) );
 
-		if ( is_wp_error( $all_groups ) ) {
-			$this->error = $this->merge_errors( $this->error, $all_groups );
+		if ( is_wp_error( $data ) ) {
+			$this->error = $this->merge_errors( $this->error, $data );
 
 			return array();
 		}
 
-		$joined_groups = array_filter( $all_groups, function( $group ) {
+		// Maybe cache the data.
+		$this->maybe_cache_data( $data );
+
+		return $data;
+	}
+
+	/**
+	 * Compile the report data into results.
+	 *
+	 * @param array $data The data to compile.
+	 *
+	 * @return array
+	 */
+	public function compile_report_data( array $data ) {
+		$joined_groups = array_filter( $data, function( $group ) {
 			$join_date = new \DateTime();
 			$join_date->setTimestamp( intval( $group['pro_join_date'] / 1000 ) ); // Meetup API uses milliseconds :/
 
@@ -82,21 +96,18 @@ class Meetup_Groups extends Date_Range {
 			return false;
 		} );
 
-		$data = array(
-			'total_groups'              => count( $all_groups ),
-			'total_groups_by_country'   => $this->count_groups_by_country( $all_groups ),
-			'total_members'             => $this->count_members( $all_groups ),
-			'total_members_by_country'  => $this->count_group_members_by_country( $all_groups ),
+		$compiled_data = array(
+			'total_groups'              => count( $data ),
+			'total_groups_by_country'   => $this->count_groups_by_country( $data ),
+			'total_members'             => $this->count_members( $data ),
+			'total_members_by_country'  => $this->count_group_members_by_country( $data ),
 			'joined_groups'             => count( $joined_groups ),
 			'joined_groups_by_country'  => $this->count_groups_by_country( $joined_groups ),
 			'joined_members'            => $this->count_members( $joined_groups ),
 			'joined_members_by_country' => $this->count_group_members_by_country( $joined_groups ),
 		);
 
-		// Maybe cache the data.
-		$this->maybe_cache_data( $data );
-
-		return $data;
+		return $compiled_data;
 	}
 
 	/**
@@ -170,7 +181,7 @@ class Meetup_Groups extends Date_Range {
 	 * @return void
 	 */
 	public function render_html() {
-		$data = $this->get_data();
+		$data       = $this->compile_report_data( $this->get_data() );
 		$start_date = $this->start_date;
 		$end_date   = $this->end_date;
 
