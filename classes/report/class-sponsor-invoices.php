@@ -332,7 +332,7 @@ class Sponsor_Invoices extends Date_Range {
 	 */
 	protected function filter_transactions_by_type( array $transactions, $type ) {
 		return array_filter( $transactions, function( $transaction ) use ( $type ) {
-			if ( $type === $transaction['type'] ) {
+			if ( $type === $transaction['Type'] ) {
 				return true;
 			}
 
