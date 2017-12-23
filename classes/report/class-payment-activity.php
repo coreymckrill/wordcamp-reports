@@ -447,6 +447,36 @@ class Payment_Activity extends Date_Range {
 		}
 	}
 
+
+	protected function export_csv() {
+		$filename = array( self::$name );
+		if ( $this->wordcamp_site_id ) {
+			$filename[] = get_wordcamp_name( $this->wordcamp_site_id );
+		}
+		$filename[] = $this->start_date->format( 'Y-m-d' );
+		$filename[] = $this->end_date->format( 'Y-m-d' );
+
+		$headers = array( 'Blog ID', 'Payment ID', 'Payment Type', 'Currency', 'Amount', 'Date Approved', 'Date Paid' );
+
+		$data = $this->get_data();
+
+		array_walk( $data, function( &$payment ) {
+			$payment['post_type']          = get_post_type_labels( get_post_type_object( $payment['post_type'] ) )->singular_name;
+			$payment['timestamp_approved'] = date( 'Y-m-d', $payment['timestamp_approved'] );
+			$payment['timestamp_paid']     = date( 'Y-m-d', $payment['timestamp_paid'] );
+
+			unset( $payment['log'] );
+		} );
+
+		$exporter = new Reports\Export_CSV( array(
+			'filename' => $filename,
+			'headers'  => $headers,
+			'data'     => $data,
+		) );
+
+		$exporter->emit_file();
+	}
+
 	/**
 	 * Render the page for this report in the WP Admin.
 	 *
@@ -460,11 +490,15 @@ class Payment_Activity extends Date_Range {
 		$action      = filter_input( INPUT_POST, 'action' );
 		$nonce       = filter_input( INPUT_POST, self::$slug . '-nonce' );
 
+		$report_actions = array( 'Show results', 'Export CSV' );
+
 		$report = null;
 
-		if ( 'run-report' === $action && wp_verify_nonce( $nonce, 'run-report' ) ) {
+		if ( in_array( $action, $report_actions, true ) &&
+		     wp_verify_nonce( $nonce, 'run-report' ) &&
+			 current_user_can( 'manage_network' ) ) {
 			$options = array(
-				'earliest_start' => new \DateTime( '2007-11-17' ), // Date of first WordCamp in the system.
+				'earliest_start' => new \DateTime( '2015-01-26' ), // Date of first indexed payment in the system.
 			);
 
 			if ( $refresh ) {
@@ -479,6 +513,10 @@ class Payment_Activity extends Date_Range {
 			}
 		}
 
-		include Reports\get_views_dir_path() . 'report/payment-activity.php';
+		if ( 'Export CSV' === $action && $report instanceof Payment_Activity ) {
+			$report->export_csv();
+		} else {
+			include Reports\get_views_dir_path() . 'report/payment-activity.php';
+		}
 	}
 }
