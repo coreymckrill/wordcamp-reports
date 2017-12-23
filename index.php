@@ -303,3 +303,16 @@ function register_rest_endpoints() {
 }
 
 add_action( 'rest_api_init', __NAMESPACE__ . '\register_rest_endpoints' );
+
+
+function register_file_exports() {
+	$report_classes = get_report_classes();
+
+	foreach ( $report_classes as $class ) {
+		if ( method_exists( $class, 'export_to_file' ) ) {
+			add_action( 'admin_init', array( $class, 'export_to_file' ) );
+		}
+	}
+}
+
+add_action( 'plugins_loaded', __NAMESPACE__ . '\register_file_exports' );

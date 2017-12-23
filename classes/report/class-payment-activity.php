@@ -447,36 +447,6 @@ class Payment_Activity extends Date_Range {
 		}
 	}
 
-
-	protected function export_csv() {
-		$filename = array( self::$name );
-		if ( $this->wordcamp_site_id ) {
-			$filename[] = get_wordcamp_name( $this->wordcamp_site_id );
-		}
-		$filename[] = $this->start_date->format( 'Y-m-d' );
-		$filename[] = $this->end_date->format( 'Y-m-d' );
-
-		$headers = array( 'Blog ID', 'Payment ID', 'Payment Type', 'Currency', 'Amount', 'Date Approved', 'Date Paid' );
-
-		$data = $this->get_data();
-
-		array_walk( $data, function( &$payment ) {
-			$payment['post_type']          = get_post_type_labels( get_post_type_object( $payment['post_type'] ) )->singular_name;
-			$payment['timestamp_approved'] = date( 'Y-m-d', $payment['timestamp_approved'] );
-			$payment['timestamp_paid']     = date( 'Y-m-d', $payment['timestamp_paid'] );
-
-			unset( $payment['log'] );
-		} );
-
-		$exporter = new Reports\Export_CSV( array(
-			'filename' => $filename,
-			'headers'  => $headers,
-			'data'     => $data,
-		) );
-
-		$exporter->emit_file();
-	}
-
 	/**
 	 * Render the page for this report in the WP Admin.
 	 *
@@ -490,11 +460,9 @@ class Payment_Activity extends Date_Range {
 		$action      = filter_input( INPUT_POST, 'action' );
 		$nonce       = filter_input( INPUT_POST, self::$slug . '-nonce' );
 
-		$report_actions = array( 'Show results', 'Export CSV' );
-
 		$report = null;
 
-		if ( in_array( $action, $report_actions, true ) &&
+		if ( 'Show results' === $action &&
 		     wp_verify_nonce( $nonce, 'run-report' ) &&
 			 current_user_can( 'manage_network' ) ) {
 			$options = array(
@@ -513,10 +481,70 @@ class Payment_Activity extends Date_Range {
 			}
 		}
 
-		if ( 'Export CSV' === $action && $report instanceof Payment_Activity ) {
-			$report->export_csv();
-		} else {
-			include Reports\get_views_dir_path() . 'report/payment-activity.php';
+		include Reports\get_views_dir_path() . 'report/payment-activity.php';
+	}
+
+
+	public static function export_to_file() {
+		$start_date  = filter_input( INPUT_POST, 'start-date' );
+		$end_date    = filter_input( INPUT_POST, 'end-date' );
+		$wordcamp_id = filter_input( INPUT_POST, 'wordcamp-id' );
+		$refresh     = filter_input( INPUT_POST, 'refresh', FILTER_VALIDATE_BOOLEAN );
+		$action      = filter_input( INPUT_POST, 'action' );
+		$nonce       = filter_input( INPUT_POST, self::$slug . '-nonce' );
+
+		$report = null;
+
+		if ( 'Export CSV' !== $action ) {
+			return;
+		}
+
+		if ( wp_verify_nonce( $nonce, 'run-report' ) && current_user_can( 'manage_network' ) ) {
+			$options = array(
+				'earliest_start' => new \DateTime( '2015-01-26' ), // Date of first indexed payment in the system.
+			);
+
+			if ( $refresh ) {
+				$options['cache_data'] = false;
+			}
+
+			$report = new self( $start_date, $end_date, $wordcamp_id, $options );
+
+			// The report adjusts the end date in some circumstances.
+			if ( empty( $report->error->get_error_messages() ) ) {
+				$end_date = $report->end_date->format( 'Y-m-d' );
+			}
+
+			$filename = array( $report::$name );
+			if ( $report->wordcamp_site_id ) {
+				$filename[] = get_wordcamp_name( $report->wordcamp_site_id );
+			}
+			$filename[] = $report->start_date->format( 'Y-m-d' );
+			$filename[] = $report->end_date->format( 'Y-m-d' );
+
+			$headers = array( 'Blog ID', 'Payment ID', 'Payment Type', 'Currency', 'Amount', 'Date Approved', 'Date Paid' );
+
+			$data = $report->get_data();
+
+			array_walk( $data, function( &$payment ) {
+				$payment['post_type']          = get_post_type_labels( get_post_type_object( $payment['post_type'] ) )->singular_name;
+				$payment['timestamp_approved'] = date( 'Y-m-d', $payment['timestamp_approved'] );
+				$payment['timestamp_paid']     = date( 'Y-m-d', $payment['timestamp_paid'] );
+
+				unset( $payment['log'] );
+			} );
+
+			$exporter = new Reports\Export_CSV( array(
+				'filename' => $filename,
+				'headers'  => $headers,
+				'data'     => $data,
+			) );
+
+			if ( ! empty( $report->error->get_error_messages() ) ) {
+				$exporter->error = $report->merge_errors( $report->error, $exporter->error );
+			}
+
+			$exporter->emit_file();
 		}
 	}
 }
