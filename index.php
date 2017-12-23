@@ -304,7 +304,11 @@ function register_rest_endpoints() {
 
 add_action( 'rest_api_init', __NAMESPACE__ . '\register_rest_endpoints' );
 
-
+/**
+ * Add action hooks for methods that emit data files.
+ *
+ * @return void
+ */
 function register_file_exports() {
 	$report_classes = get_report_classes();
 

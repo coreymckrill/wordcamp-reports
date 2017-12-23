@@ -484,7 +484,11 @@ class Payment_Activity extends Date_Range {
 		include Reports\get_views_dir_path() . 'report/payment-activity.php';
 	}
 
-
+	/**
+	 * Export the report data to a file.
+	 *
+	 * @return void
+	 */
 	public static function export_to_file() {
 		$start_date  = filter_input( INPUT_POST, 'start-date' );
 		$end_date    = filter_input( INPUT_POST, 'end-date' );
