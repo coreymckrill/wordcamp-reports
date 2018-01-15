@@ -532,8 +532,8 @@ class Payment_Activity extends Date_Range {
 
 			array_walk( $data, function( &$payment ) {
 				$payment['post_type']          = get_post_type_labels( get_post_type_object( $payment['post_type'] ) )->singular_name;
-				$payment['timestamp_approved'] = date( 'Y-m-d', $payment['timestamp_approved'] );
-				$payment['timestamp_paid']     = date( 'Y-m-d', $payment['timestamp_paid'] );
+				$payment['timestamp_approved'] = ( $payment['timestamp_approved'] > 0 ) ? date( 'Y-m-d', $payment['timestamp_approved'] ) : '';
+				$payment['timestamp_paid']     = ( $payment['timestamp_paid'] > 0 ) ? date( 'Y-m-d', $payment['timestamp_paid'] ) : '';
 
 				unset( $payment['log'] );
 			} );
