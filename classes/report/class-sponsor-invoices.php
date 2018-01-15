@@ -459,7 +459,7 @@ class Sponsor_Invoices extends Date_Range {
 			);
 
 			if ( $refresh ) {
-				$options['cache_data'] = false;
+				$options['flush_cache'] = true;
 			}
 
 			$report = new self( $start_date, $end_date, $wordcamp_id, $options );
