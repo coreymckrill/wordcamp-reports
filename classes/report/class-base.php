@@ -64,12 +64,14 @@ abstract class Base {
 	 * @param array $options    {
 	 *     Optional. Additional report parameters.
 	 *
-	 *     @type bool $cache_data True to look for cached data and cache the generated data set. Default true.
+	 *     @type bool $cache_data  True to look for cached data and cache the generated data set. Default true.
+	 *     @type bool $flush_cache True to delete any cached data generated with the current report parameters. Default false.
 	 * }
 	 */
 	public function __construct( array $options = array() ) {
 		$this->options = wp_parse_args( $options, array(
-			'cache_data' => true,
+			'cache_data'  => true,
+			'flush_cache' => false,
 		) );
 
 		$this->error = new \WP_Error();
@@ -117,7 +119,10 @@ abstract class Base {
 	 * @return mixed|null Null if caching is disabled. Otherwise a cached value, or false if none is available.
 	 */
 	protected function maybe_get_cached_data() {
-		if ( false !== $this->options['cache_data'] ) {
+		if ( true === $this->options['flush_cache'] ) {
+			$this->flush_cache();
+			return false;
+		} elseif ( false !== $this->options['cache_data'] ) {
 			return get_transient( $this->get_cache_key() );
 		}
 
@@ -140,6 +145,15 @@ abstract class Base {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Delete the cached data for this report instance, if it exists.
+	 *
+	 * @return bool
+	 */
+	protected function flush_cache() {
+		return delete_transient( $this->get_cache_key() );
 	}
 
 	/**
