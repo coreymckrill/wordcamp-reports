@@ -206,6 +206,21 @@ abstract class Base {
 	}
 
 	/**
+	 * Render an HTML notice containing error messages.
+	 *
+	 * @return void
+	 */
+	protected function render_error_html() {
+		?>
+		<div class="notice notice-error">
+			<?php foreach ( $this->error->get_error_messages() as $message ) : ?>
+				<?php echo wpautop( wp_kses_post( $message ) ); ?>
+			<?php endforeach; ?>
+		</div>
+		<?php
+	}
+
+	/**
 	 * Prepare report data for a REST response.
 	 *
 	 * This takes an arbitrary data value and wraps it in a WP REST Response object along with additional
