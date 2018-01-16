@@ -166,7 +166,7 @@ class Sponsorship_Grants extends Date_Range {
 
 		if ( $this->wordcamp_id ) {
 			if ( array_key_exists( $this->wordcamp_id, $data ) ) {
-				return array( $data[ $this->wordcamp_id ] );
+				return array( $this->wordcamp_id => $data[ $this->wordcamp_id ] );
 			} else {
 				return array();
 			}
