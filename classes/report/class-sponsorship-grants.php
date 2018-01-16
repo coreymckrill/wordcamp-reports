@@ -112,10 +112,6 @@ class Sponsorship_Grants extends Date_Range {
 		$data      = array();
 
 		foreach ( $wordcamps as $wordcamp_id => $wordcamp ) {
-			if ( $this->wordcamp_id && $wordcamp_id !== $this->wordcamp_id ) {
-				continue;
-			}
-
 			$currency = get_post_meta( $wordcamp_id, 'Global Sponsorship Grant Currency', true );
 			$amount   = get_post_meta( $wordcamp_id, 'Global Sponsorship Grant Amount', true );
 
@@ -166,7 +162,17 @@ class Sponsorship_Grants extends Date_Range {
 			'wcpt-needs-contract'
 		);
 		
-		return $status_report->get_data();
+		$data = $status_report->get_data();
+
+		if ( $this->wordcamp_id ) {
+			if ( array_key_exists( $this->wordcamp_id, $data ) ) {
+				return array( $data[ $this->wordcamp_id ] );
+			} else {
+				return array();
+			}
+		}
+
+		return $data;
 	}
 
 	/**
