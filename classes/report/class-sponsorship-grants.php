@@ -206,7 +206,7 @@ class Sponsorship_Grants extends Date_Range {
 						$this->merge_errors( $this->error, $conversion );
 					}
 				} else {
-					$group['converted_amounts'][ $currency ] = $conversion->USD;
+					$data['converted_amounts'][ $currency ] = $conversion->USD;
 				}
 			}
 		}
