@@ -27,7 +27,6 @@ use WordCamp\Reports\Report;
 	</p>
 
 	<form method="post" action="">
-		<input type="hidden" name="action" value="run-report" />
 		<?php wp_nonce_field( 'run-report', Report\Sponsorship_Grants::$slug . '-nonce' ); ?>
 
 		<table class="form-table">
@@ -51,7 +50,8 @@ use WordCamp\Reports\Report;
 			</tbody>
 		</table>
 
-		<?php submit_button( 'Submit', 'primary', '' ); ?>
+		<?php submit_button( 'Show results', 'primary', 'action', false ); ?>
+		<?php submit_button( 'Export CSV', 'secondary', 'action', false ); ?>
 	</form>
 
 	<?php if ( $report instanceof Report\Sponsorship_Grants ) : ?>
