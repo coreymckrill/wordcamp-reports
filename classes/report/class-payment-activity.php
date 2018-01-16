@@ -1,5 +1,7 @@
 <?php
 /**
+ * Payment Activity.
+ *
  * @package WordCamp\Reports
  */
 
@@ -34,7 +36,7 @@ class Payment_Activity extends Date_Range {
 	 *
 	 * @var string
 	 */
-	public static $description = 'A summary of payment activity during a given time period.';
+	public static $description = 'Vendor payments and reimbursement requests.';
 
 	/**
 	 * Report group.
@@ -44,16 +46,22 @@ class Payment_Activity extends Date_Range {
 	public static $group = 'finance';
 
 	/**
+	 * WordCamp post ID.
+	 *
 	 * @var int The ID of the WordCamp post for this report.
 	 */
 	public $wordcamp_id = 0;
 
 	/**
+	 * WordCamp site ID.
+	 *
 	 * @var int The ID of the WordCamp site where the invoices are located.
 	 */
 	public $wordcamp_site_id = 0;
 
 	/**
+	 * Currency exchange rate client.
+	 *
 	 * @var Reports\Currency_XRT_Client Utility to handle currency conversion.
 	 */
 	protected $xrt = null;
@@ -63,7 +71,7 @@ class Payment_Activity extends Date_Range {
 	 *
 	 * @param string $start_date  The start of the date range for the report.
 	 * @param string $end_date    The end of the date range for the report.
-	 * @param int    $wordcamp_id Optional. The ID of a WordCamp post to retrieve invoices for.
+	 * @param int    $wordcamp_id Optional. The ID of a WordCamp post to limit this report to.
 	 * @param array  $options     {
 	 *     Optional. Additional report parameters.
 	 *     See Base::__construct and Date_Range::__construct for additional parameters.
@@ -173,21 +181,25 @@ class Payment_Activity extends Date_Range {
 		$extra_where = ( $this->wordcamp_site_id ) ? ' AND blog_id = ' . $this->wordcamp_site_id : '';
 
 		$index_query = $wpdb->prepare( "
-			(
-			SELECT blog_id, post_id
-			FROM $payments_table
-			WHERE created <= %d
-			AND ( paid = 0 OR paid >= %d )
-			$extra_where
-			) UNION (
-			SELECT blog_id, request_id AS post_id
-			FROM $reimbursements_table
-			WHERE date_requested <= %d
-			AND ( date_paid = 0 OR date_paid >= %d )
-			$extra_where
-			)
-		", $this->end_date->getTimestamp(), $this->start_date->getTimestamp(),
-			$this->end_date->getTimestamp(), $this->start_date->getTimestamp() );
+				(
+				SELECT blog_id, post_id
+				FROM $payments_table
+				WHERE created <= %d
+				AND ( paid = 0 OR paid >= %d )
+				$extra_where
+				) UNION (
+				SELECT blog_id, request_id AS post_id
+				FROM $reimbursements_table
+				WHERE date_requested <= %d
+				AND ( date_paid = 0 OR date_paid >= %d )
+				$extra_where
+				)
+			",
+			$this->end_date->getTimestamp(),
+			$this->start_date->getTimestamp(),
+			$this->end_date->getTimestamp(),
+			$this->start_date->getTimestamp()
+		);
 
 		return $wpdb->get_results( $index_query, ARRAY_A );
 	}
@@ -368,7 +380,7 @@ class Payment_Activity extends Date_Range {
 					}
 					break;
 			}
-		}
+		} // End foreach().
 
 		foreach ( $data_groups as &$group ) {
 			ksort( $group['vendor_payment_amount_by_currency'] );
@@ -435,13 +447,7 @@ class Payment_Activity extends Date_Range {
 		$payments      = $data['payments'];
 
 		if ( ! empty( $this->error->get_error_messages() ) ) {
-			?>
-			<div class="notice notice-error">
-				<?php foreach ( $this->error->get_error_messages() as $message ) : ?>
-					<?php echo wpautop( wp_kses_post( $message ) ); ?>
-				<?php endforeach; ?>
-			</div>
-			<?php
+			$this->render_error_html();
 		} else {
 			include Reports\get_views_dir_path() . 'html/payment-activity.php';
 		}
@@ -462,9 +468,10 @@ class Payment_Activity extends Date_Range {
 
 		$report = null;
 
-		if ( 'Show results' === $action &&
-		     wp_verify_nonce( $nonce, 'run-report' ) &&
-			 current_user_can( 'manage_network' ) ) {
+		if ( 'Show results' === $action
+			&& wp_verify_nonce( $nonce, 'run-report' )
+			&& current_user_can( 'manage_network' )
+		) {
 			$options = array(
 				'earliest_start' => new \DateTime( '2015-01-26' ), // Date of first indexed payment in the system.
 			);
@@ -549,6 +556,6 @@ class Payment_Activity extends Date_Range {
 			}
 
 			$exporter->emit_file();
-		}
+		} // End if().
 	}
 }
