@@ -1,5 +1,7 @@
 <?php
 /**
+ * Sponsor Invoices.
+ *
  * @package WordCamp\Reports
  */
 
@@ -44,16 +46,22 @@ class Sponsor_Invoices extends Date_Range {
 	public static $group = 'finance';
 
 	/**
+	 * WordCamp post ID.
+	 *
 	 * @var int The ID of the WordCamp post for this report.
 	 */
 	public $wordcamp_id = 0;
 
 	/**
+	 * WordCamp site ID.
+	 *
 	 * @var int The ID of the WordCamp site where the invoices are located.
 	 */
 	public $wordcamp_site_id = 0;
 
 	/**
+	 * Currency exchange rate client.
+	 *
 	 * @var Reports\Currency_XRT_Client Utility to handle currency conversion.
 	 */
 	protected $xrt = null;
@@ -63,7 +71,7 @@ class Sponsor_Invoices extends Date_Range {
 	 *
 	 * @param string $start_date  The start of the date range for the report.
 	 * @param string $end_date    The end of the date range for the report.
-	 * @param int    $wordcamp_id Optional. The ID of a WordCamp post to retrieve invoices for.
+	 * @param int    $wordcamp_id Optional. The ID of a WordCamp post to limit this report to.
 	 * @param array  $options     {
 	 *     Optional. Additional report parameters.
 	 *     See Base::__construct and Date_Range::__construct for additional parameters.
@@ -178,7 +186,7 @@ class Sponsor_Invoices extends Date_Range {
 				array_values( $qbo_invoices ),
 				array_values( $qbo_payments )
 			);
-		}
+		} // End if().
 
 		// Maybe cache the data.
 		$this->maybe_cache_data( $data );
@@ -426,13 +434,7 @@ class Sponsor_Invoices extends Date_Range {
 		$payments      = $data['payments'];
 
 		if ( ! empty( $this->error->get_error_messages() ) ) {
-			?>
-			<div class="notice notice-error">
-				<?php foreach ( $this->error->get_error_messages() as $message ) : ?>
-					<?php echo wpautop( wp_kses_post( $message ) ); ?>
-				<?php endforeach; ?>
-			</div>
-			<?php
+			$this->render_error_html();
 		} else {
 			include Reports\get_views_dir_path() . 'html/sponsor-invoices.php';
 		}
@@ -453,9 +455,12 @@ class Sponsor_Invoices extends Date_Range {
 
 		$report = null;
 
-		if ( 'run-report' === $action && wp_verify_nonce( $nonce, 'run-report' ) ) {
+		if ( 'Show results' === $action
+		     && wp_verify_nonce( $nonce, 'run-report' )
+		     && current_user_can( 'manage_network' )
+		) {
 			$options = array(
-				'earliest_start' => new \DateTime( '2007-11-17' ), // Date of first WordCamp in the system.
+				'earliest_start' => new \DateTime( '2016-01-07' ), // Date of first QBO invoice in the system.
 			);
 
 			if ( $refresh ) {

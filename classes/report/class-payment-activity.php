@@ -469,8 +469,8 @@ class Payment_Activity extends Date_Range {
 		$report = null;
 
 		if ( 'Show results' === $action
-			&& wp_verify_nonce( $nonce, 'run-report' )
-			&& current_user_can( 'manage_network' )
+		     && wp_verify_nonce( $nonce, 'run-report' )
+		     && current_user_can( 'manage_network' )
 		) {
 			$options = array(
 				'earliest_start' => new \DateTime( '2015-01-26' ), // Date of first indexed payment in the system.
