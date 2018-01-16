@@ -112,6 +112,10 @@ class Sponsorship_Grants extends Date_Range {
 		$data      = array();
 
 		foreach ( $wordcamps as $wordcamp_id => $wordcamp ) {
+			if ( $this->wordcamp_id && $wordcamp_id !== $this->wordcamp_id ) {
+				continue;
+			}
+
 			$currency = get_post_meta( $wordcamp_id, 'Global Sponsorship Grant Currency', true );
 			$amount   = get_post_meta( $wordcamp_id, 'Global Sponsorship Grant Amount', true );
 
