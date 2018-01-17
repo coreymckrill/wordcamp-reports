@@ -15,7 +15,7 @@ defined( 'WPINC' ) || die();
 $asterisk2 = false;
 ?>
 
-<?php if ( $data['grant_count'] ) : ?>
+<?php if ( $compiled_data['grant_count'] ) : ?>
 	<h3>
 		Global Sponsorship Grants
 		<?php if ( $wordcamp_name ) : ?>
