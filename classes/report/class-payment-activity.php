@@ -292,20 +292,21 @@ class Payment_Activity extends Date_Range {
 		} );
 
 		foreach ( $parsed_post['log'] as $index => $entry ) {
-			if ( \BLOG_ID_CURRENT_SITE === $parsed_post['blog_id'] ) {
+			if ( \BLOG_ID_CURRENT_SITE === $parsed_post['blog_id'] && 0 === $index ) {
 				// Payments on central.wordcamp.org have a different workflow.
-				if ( 0 === $index ) {
-					$parsed_post['timestamp_approved'] = $entry['timestamp'];
-				} elseif ( false !== stripos( $entry['message'], 'Marked as paid' ) ) {
-					$parsed_post['timestamp_paid'] = $entry['timestamp'];
-				}
-			} else {
-				if ( false !== stripos( $entry['message'], 'Request approved' ) ) {
-					$parsed_post['timestamp_approved'] = $entry['timestamp'];
-				} elseif ( false !== stripos( $entry['message'], 'Pending Payment' ) ) {
-					$parsed_post['timestamp_paid'] = $entry['timestamp'];
-				}
+				$parsed_post['timestamp_approved'] = $entry['timestamp'];
+			} elseif ( false !== stripos( $entry['message'], 'Request approved' ) ) {
+				$parsed_post['timestamp_approved'] = $entry['timestamp'];
+			} elseif ( false !== stripos( $entry['message'], 'Pending Payment' ) ) {
+				$parsed_post['timestamp_paid'] = $entry['timestamp'];
+			} elseif ( false !== stripos( $entry['message'], 'Marked as paid' ) && ! $parsed_post['timestamp_paid'] ) {
+				$parsed_post['timestamp_paid'] = $entry['timestamp'];
 			}
+		}
+
+		if ( $parsed_post['timestamp_paid'] && ! $parsed_post['timestamp_approved'] ) {
+			// If we didn't find an approved timestamp, but we did find a paid timestamp, use the same for both.
+			$parsed_post['timestamp_approved'] = $parsed_post['timestamp_paid'];
 		}
 
 		unset( $parsed_post['log'] );
