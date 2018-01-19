@@ -73,6 +73,21 @@ class Meetup_Groups extends Date_Range {
 			return array();
 		}
 
+		array_walk( $data, function( &$group ) {
+			$group = shortcode_atts( array(
+				'name'          => '',
+				'urlname'       => '',
+				'city'          => '',
+				'state'         => '',
+				'country'       => '',
+				'lat'           => 0,
+				'lon'           => 0,
+				'member_count'  => 0,
+				'founded_date'  => 0,
+				'pro_join_date' => 0,
+			), $group );
+		} );
+
 		// Maybe cache the data.
 		$this->maybe_cache_data( $data );
 
@@ -266,17 +281,19 @@ class Meetup_Groups extends Date_Range {
 			$filename[] = $report->start_date->format( 'Y-m-d' );
 			$filename[] = $report->end_date->format( 'Y-m-d' );
 
-			$headers = array(  );
+			$headers = array( 'Name', 'URL', 'City', 'State', 'Country', 'Latitude', 'Longitude', 'Member Count', 'Date Founded', 'Date Joined' );
 
 			$data = $report->get_data();
 
-			/*array_walk( $data, function( &$payment ) {
-				
-			} );*/
+			array_walk( $data, function( &$group ) {
+				$group['urlname']       = ( $group['urlname'] ) ? esc_url( 'https://www.meetup.com/' . $group['urlname'] . '/' ) : '';
+				$group['founded_date']  = ( $group['founded_date'] ) ? date( 'Y-m-d', $group['founded_date'] / 1000 ) : '';
+				$group['pro_join_date'] = ( $group['pro_join_date'] ) ? date( 'Y-m-d', $group['pro_join_date'] / 1000 ) : '';
+			} );
 
 			$exporter = new Reports\Export_CSV( array(
 				'filename' => $filename,
-				//'headers'  => $headers,
+				'headers'  => $headers,
 				'data'     => $data,
 			) );
 
