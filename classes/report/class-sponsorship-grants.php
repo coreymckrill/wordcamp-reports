@@ -36,7 +36,7 @@ class Sponsorship_Grants extends Date_Range {
 	 *
 	 * @var string
 	 */
-	public static $description = 'A summary of sponsorship grant awards during a given time period.';
+	public static $description = 'Global Sponsorship Grant amounts and a list of recipients during a given time period.';
 
 	/**
 	 * Report group.

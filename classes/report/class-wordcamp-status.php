@@ -36,7 +36,7 @@ class WordCamp_Status extends Date_Range {
 	 *
 	 * @var string
 	 */
-	public static $description = 'A summary of WordCamp status changes during a given time period.';
+	public static $description = 'WordCamp application status changes during a given time period.';
 
 	/**
 	 * Report group.

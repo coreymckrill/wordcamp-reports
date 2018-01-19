@@ -35,7 +35,7 @@ class Ticket_Revenue extends Date_Range {
 	 *
 	 * @var string
 	 */
-	public static $description = 'A summary of WordCamp ticket revenue during a given time period.';
+	public static $description = 'A breakdown of WordCamp ticket revenue during a given time period.';
 
 	/**
 	 * Report group.

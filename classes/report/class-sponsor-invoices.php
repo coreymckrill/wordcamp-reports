@@ -36,7 +36,7 @@ class Sponsor_Invoices extends Date_Range {
 	 *
 	 * @var string
 	 */
-	public static $description = 'A summary of sponsor invoice activity during a given time period.';
+	public static $description = 'Sponsor invoices sent and paid during a given time period.';
 
 	/**
 	 * Report group.
