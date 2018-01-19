@@ -459,6 +459,7 @@ class WordCamp_Status extends Date_Range {
 		$start_date = filter_input( INPUT_POST, 'start-date' );
 		$end_date   = filter_input( INPUT_POST, 'end-date' );
 		$status     = filter_input( INPUT_POST, 'status' );
+		$refresh    = filter_input( INPUT_POST, 'refresh', FILTER_VALIDATE_BOOLEAN );
 		$action     = filter_input( INPUT_POST, 'action' );
 		$nonce      = filter_input( INPUT_POST, self::$slug . '-nonce' );
 		$statuses   = Utilities\get_all_wordcamp_statuses();
@@ -468,8 +469,11 @@ class WordCamp_Status extends Date_Range {
 		if ( 'run-report' === $action && wp_verify_nonce( $nonce, 'run-report' ) ) {
 			$options = array(
 				'earliest_start' => new \DateTime( '2007-11-17' ), // Date of first WordCamp in the system.
-				'cache_data'     => false, // WP Admin is low traffic and more trusted, so turn off caching.
 			);
+
+			if ( $refresh ) {
+				$options['flush_cache'] = true;
+			}
 
 			$report = new self( $start_date, $end_date, $status, $options );
 

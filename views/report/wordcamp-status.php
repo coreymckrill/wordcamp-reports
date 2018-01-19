@@ -52,6 +52,10 @@ use WordCamp\Reports\Report;
 						</select>
 					</td>
 				</tr>
+				<tr>
+					<th scope="row"><label for="refresh">Refresh results</label></th>
+					<td><input type="checkbox" id="refresh" name="refresh" /></td>
+				</tr>
 			</tbody>
 		</table>
 
