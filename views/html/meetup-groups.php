@@ -28,7 +28,7 @@ defined( 'WPINC' ) || die();
 		<?php foreach ( array_keys( $data['total_groups_by_country'] ) as $country ) : ?>
 			<tr>
 				<td><?php echo esc_html( $country ); ?></td>
-				<td><?php echo number_format_i18n( $data['total_groups_by_country'][ $country ] ); ?></td>
+				<td class="number"><?php echo number_format_i18n( $data['total_groups_by_country'][ $country ] ); ?></td>
 			</tr>
 		<?php endforeach; ?>
 		</tbody>
@@ -48,7 +48,7 @@ defined( 'WPINC' ) || die();
 		<?php foreach ( array_keys( $data['total_members_by_country'] ) as $country ) : ?>
 			<tr>
 				<td><?php echo esc_html( $country ); ?></td>
-				<td><?php echo number_format_i18n( $data['total_members_by_country'][ $country ] ); ?></td>
+				<td class="number"><?php echo number_format_i18n( $data['total_members_by_country'][ $country ] ); ?></td>
 			</tr>
 		<?php endforeach; ?>
 		</tbody>
@@ -71,7 +71,7 @@ defined( 'WPINC' ) || die();
 			<?php foreach ( array_keys( $data['joined_groups_by_country'] ) as $country ) : ?>
 				<tr>
 					<td><?php echo esc_html( $country ); ?></td>
-					<td><?php echo number_format_i18n( $data['joined_groups_by_country'][ $country ] ); ?></td>
+					<td class="number"><?php echo number_format_i18n( $data['joined_groups_by_country'][ $country ] ); ?></td>
 				</tr>
 			<?php endforeach; ?>
 			</tbody>
@@ -91,7 +91,7 @@ defined( 'WPINC' ) || die();
 			<?php foreach ( array_keys( $data['joined_members_by_country'] ) as $country ) : ?>
 				<tr>
 					<td><?php echo esc_html( $country ); ?></td>
-					<td><?php echo number_format_i18n( $data['joined_members_by_country'][ $country ] ); ?></td>
+					<td class="number"><?php echo number_format_i18n( $data['joined_members_by_country'][ $country ] ); ?></td>
 				</tr>
 			<?php endforeach; ?>
 			</tbody>
