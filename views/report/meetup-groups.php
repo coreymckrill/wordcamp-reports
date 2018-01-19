@@ -26,7 +26,6 @@ use WordCamp\Reports\Report;
 	</p>
 
 	<form method="post" action="">
-		<input type="hidden" name="action" value="run-report" />
 		<?php wp_nonce_field( 'run-report', Report\Meetup_Groups::$slug . '-nonce' ); ?>
 
 		<table class="form-table">
@@ -39,10 +38,15 @@ use WordCamp\Reports\Report;
 				<th scope="row"><label for="end-date">End Date</label></th>
 				<td><input type="date" id="end-date" name="end-date" value="<?php echo esc_attr( $end_date ) ?>" /></td>
 			</tr>
+			<tr>
+				<th scope="row"><label for="refresh">Refresh results</label></th>
+				<td><input type="checkbox" id="refresh" name="refresh" /></td>
+			</tr>
 			</tbody>
 		</table>
 
-		<?php submit_button( 'Submit', 'primary', '' ); ?>
+		<?php submit_button( 'Show results', 'primary', 'action', false ); ?>
+		<?php submit_button( 'Export CSV', 'secondary', 'action', false ); ?>
 	</form>
 
 	<?php if ( $report instanceof Report\Meetup_Groups ) : ?>
