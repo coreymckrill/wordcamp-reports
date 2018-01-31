@@ -140,7 +140,10 @@ class Payment_Activity extends Date_Range {
 		$payment_posts = array_map( array( $this, 'parse_payment_post_log' ), $payment_posts );
 
 		$data = array_filter( $payment_posts, function( $payment ) {
-			if ( ! $this->timestamp_within_date_range( $payment['timestamp_approved'] ) && ! $this->timestamp_within_date_range( $payment['timestamp_paid'] ) ) {
+			if ( ! $this->timestamp_within_date_range( $payment['timestamp_approved'] )
+			     && ! $this->timestamp_within_date_range( $payment['timestamp_paid'] )
+			     && ! $this->timestamp_within_date_range( $payment['timestamp_failed'] )
+			) {
 				return false;
 			}
 
@@ -246,12 +249,13 @@ class Payment_Activity extends Date_Range {
 			}
 
 			$payment_posts[] = array(
-				'blog_id'       => $blog_id,
-				'post_id'       => $raw_post->ID,
-				'post_type'     => $raw_post->post_type,
-				'currency'      => $currency,
-				'amount'        => $amount,
-				'log'           => json_decode( $raw_post->_wcp_log, true ),
+				'blog_id'   => $blog_id,
+				'post_id'   => $raw_post->ID,
+				'post_type' => $raw_post->post_type,
+				'currency'  => $currency,
+				'amount'    => $amount,
+				'status'    => $raw_post->post_status,
+				'log'       => json_decode( $raw_post->_wcp_log, true ),
 			);
 
 			clean_post_cache( $raw_post );
@@ -276,6 +280,7 @@ class Payment_Activity extends Date_Range {
 		$parsed_post = wp_parse_args( array(
 			'timestamp_approved' => 0,
 			'timestamp_paid'     => 0,
+			'timestamp_failed'   => 0,
 		), $payment_post );
 
 		if ( ! isset( $parsed_post['log'] ) ) {
@@ -309,6 +314,15 @@ class Payment_Activity extends Date_Range {
 			$parsed_post['timestamp_approved'] = $parsed_post['timestamp_paid'];
 		}
 
+		// There isn't an explicit log entry for failed or cancelled payments, so we have to look at the post status.
+		if ( in_array( $parsed_post['status'], array( 'wcb-failed', 'wcb-cancelled' ), true ) ) {
+			$parsed_post['timestamp_paid'] = 0;
+
+			// Assume the last log entry is when the payment was marked failed/cancelled.
+			$last_log = array_slice( $parsed_post['log'], -1 )[0];
+			$parsed_post['timestamp_failed'] = $last_log['timestamp'];
+		}
+
 		unset( $parsed_post['log'] );
 
 		return $parsed_post;
@@ -335,9 +349,11 @@ class Payment_Activity extends Date_Range {
 		$data_groups = array(
 			'requests' => $data,
 			'payments' => $data,
+			'failures' => $data,
 		);
 
-		$currencies = array();
+		$currencies      = array();
+		$failed_statuses = array( 'wcb-failed', 'wcb-cancelled' );
 
 		foreach ( $payment_posts as $payment ) {
 			if ( ! isset( $payment['currency'] ) || ! $payment['currency'] ) {
@@ -351,6 +367,9 @@ class Payment_Activity extends Date_Range {
 				$data_groups['payments']['vendor_payment_amount_by_currency'][ $payment['currency'] ] = 0;
 				$data_groups['payments']['reimbursement_amount_by_currency'][ $payment['currency'] ]  = 0;
 				$data_groups['payments']['total_amount_by_currency'][ $payment['currency'] ]          = 0;
+				$data_groups['failures']['vendor_payment_amount_by_currency'][ $payment['currency'] ] = 0;
+				$data_groups['failures']['reimbursement_amount_by_currency'][ $payment['currency'] ]  = 0;
+				$data_groups['failures']['total_amount_by_currency'][ $payment['currency'] ]          = 0;
 				$currencies[]                                                                         = $payment['currency'];
 			}
 
@@ -365,6 +384,10 @@ class Payment_Activity extends Date_Range {
 						$data_groups['payments']['vendor_payment_count'] ++;
 						$data_groups['payments']['vendor_payment_amount_by_currency'][ $payment['currency'] ] += floatval( $payment['amount'] );
 						$data_groups['payments']['total_amount_by_currency'][ $payment['currency'] ]          += floatval( $payment['amount'] );
+					} elseif ( $this->timestamp_within_date_range( $payment['timestamp_failed'] ) ) {
+						$data_groups['failures']['vendor_payment_count'] ++;
+						$data_groups['failures']['vendor_payment_amount_by_currency'][ $payment['currency'] ] += floatval( $payment['amount'] );
+						$data_groups['failures']['total_amount_by_currency'][ $payment['currency'] ]          += floatval( $payment['amount'] );
 					}
 					break;
 
@@ -378,6 +401,10 @@ class Payment_Activity extends Date_Range {
 						$data_groups['payments']['reimbursement_count'] ++;
 						$data_groups['payments']['reimbursement_amount_by_currency'][ $payment['currency'] ] += floatval( $payment['amount'] );
 						$data_groups['payments']['total_amount_by_currency'][ $payment['currency'] ]         += floatval( $payment['amount'] );
+					} elseif ( $this->timestamp_within_date_range( $payment['timestamp_failed'] ) ) {
+						$data_groups['failures']['reimbursement_count'] ++;
+						$data_groups['failures']['reimbursement_amount_by_currency'][ $payment['currency'] ] += floatval( $payment['amount'] );
+						$data_groups['failures']['total_amount_by_currency'][ $payment['currency'] ]         += floatval( $payment['amount'] );
 					}
 					break;
 			}
@@ -446,6 +473,7 @@ class Payment_Activity extends Date_Range {
 		$wordcamp_name = ( $this->wordcamp_site_id ) ? get_wordcamp_name( $this->wordcamp_site_id ) : '';
 		$requests      = $data['requests'];
 		$payments      = $data['payments'];
+		$failures      = $data['failures'];
 
 		if ( ! empty( $this->error->get_error_messages() ) ) {
 			$this->render_error_html();
@@ -534,7 +562,7 @@ class Payment_Activity extends Date_Range {
 			$filename[] = $report->start_date->format( 'Y-m-d' );
 			$filename[] = $report->end_date->format( 'Y-m-d' );
 
-			$headers = array( 'Blog ID', 'Payment ID', 'Payment Type', 'Currency', 'Amount', 'Date Approved', 'Date Paid' );
+			$headers = array( 'Blog ID', 'Payment ID', 'Payment Type', 'Currency', 'Amount', 'Status', 'Date Approved', 'Date Paid', 'Date Failed/Cancelled' );
 
 			$data = $report->get_data();
 
@@ -542,6 +570,7 @@ class Payment_Activity extends Date_Range {
 				$payment['post_type']          = get_post_type_labels( get_post_type_object( $payment['post_type'] ) )->singular_name;
 				$payment['timestamp_approved'] = ( $payment['timestamp_approved'] > 0 ) ? date( 'Y-m-d', $payment['timestamp_approved'] ) : '';
 				$payment['timestamp_paid']     = ( $payment['timestamp_paid'] > 0 ) ? date( 'Y-m-d', $payment['timestamp_paid'] ) : '';
+				$payment['timestamp_failed']   = ( $payment['timestamp_failed'] > 0 ) ? date( 'Y-m-d', $payment['timestamp_failed'] ) : '';
 
 				unset( $payment['log'] );
 			} );
