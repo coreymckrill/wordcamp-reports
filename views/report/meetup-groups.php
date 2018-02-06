@@ -21,9 +21,11 @@ use WordCamp\Reports\Report;
 		<?php echo esc_html( Report\Meetup_Groups::$name ); ?>
 	</h1>
 
-	<p>
-		<?php echo wp_kses_post( Report\Meetup_Groups::$description ); ?>
-	</p>
+	<?php echo wpautop( wp_kses_post( Report\Meetup_Groups::$description ) ); ?>
+
+	<h4>Methodology</h4>
+
+	<?php echo wpautop( wp_kses_post( Report\Meetup_Groups::$methodology ) ); ?>
 
 	<form method="post" action="">
 		<?php wp_nonce_field( 'run-report', Report\Meetup_Groups::$slug . '-nonce' ); ?>

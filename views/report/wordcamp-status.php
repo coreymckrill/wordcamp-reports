@@ -23,9 +23,11 @@ use WordCamp\Reports\Report;
 		<?php echo esc_html( Report\WordCamp_Status::$name ); ?>
 	</h1>
 
-	<p>
-		<?php echo wp_kses_post( Report\WordCamp_Status::$description ); ?>
-	</p>
+	<?php echo wpautop( wp_kses_post( Report\WordCamp_Status::$description ) ); ?>
+
+	<h4>Methodology</h4>
+
+	<?php echo wpautop( wp_kses_post( Report\WordCamp_Status::$methodology ) ); ?>
 
 	<form method="post" action="">
 		<input type="hidden" name="action" value="run-report" />

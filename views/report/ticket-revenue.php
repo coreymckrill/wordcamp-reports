@@ -22,9 +22,11 @@ use WordCamp\Reports\Report;
 		<?php echo esc_html( Report\Ticket_Revenue::$name ); ?>
 	</h1>
 
-	<p>
-		<?php echo wp_kses_post( Report\Ticket_Revenue::$description ); ?>
-	</p>
+	<?php echo wpautop( wp_kses_post( Report\Ticket_Revenue::$description ) ); ?>
+
+	<h4>Methodology</h4>
+
+	<?php echo wpautop( wp_kses_post( Report\Ticket_Revenue::$methodology ) ); ?>
 
 	<form method="post" action="">
 		<?php wp_nonce_field( 'run-report', Report\Ticket_Revenue::$slug . '-nonce' ); ?>

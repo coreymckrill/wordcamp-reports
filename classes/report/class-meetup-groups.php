@@ -35,7 +35,16 @@ class Meetup_Groups extends Date_Range {
 	 *
 	 * @var string
 	 */
-	public static $description = 'Meetup groups in the Chapter program and the number of groups that joined during a given time period.';
+	public static $description = 'The number of meetup groups in the Chapter program on a given date and the number of groups that joined during a given time period.';
+
+	/**
+	 * Report methodology.
+	 *
+	 * @var string
+	 */
+	public static $methodology = "
+		Retrieve data about groups in the Chapter program from the Meetup.com API. Only groups who joined the Chapter program before the specified end date will be included.
+	";
 
 	/**
 	 * Report group.

@@ -38,6 +38,13 @@ abstract class Base {
 	public static $description = '';
 
 	/**
+	 * Report methodology.
+	 *
+	 * @var string
+	 */
+	public static $methodology = '';
+
+	/**
 	 * Report group.
 	 *
 	 * @var string

@@ -36,7 +36,19 @@ class Sponsorship_Grants extends Date_Range {
 	 *
 	 * @var string
 	 */
-	public static $description = 'Global Sponsorship Grant amounts and a list of recipients during a given time period.';
+	public static $description = 'Global Sponsorship Grant amounts and a list of recipients.';
+
+	/**
+	 * Report methodology.
+	 *
+	 * @var string
+	 */
+	public static $methodology = "
+		<ol>
+			<li>Use the WordCamp Status report to pull a list of WordCamps that received the status of \"Needs Contract to be Signed\" sometime during the specified date range.</li>
+			<li>Parse the status log of each matched WordCamp to determine when the sponsorship grant was approved.</li>
+		</ol>
+	";
 
 	/**
 	 * Report group.

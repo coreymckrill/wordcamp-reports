@@ -39,6 +39,20 @@ class Payment_Activity extends Date_Range {
 	public static $description = 'Vendor payments and reimbursement requests.';
 
 	/**
+	 * Report methodology.
+	 *
+	 * @var string
+	 */
+	public static $methodology = "
+		<ol>
+			<li>Retrieve index entries for vendor payments and reimbursement requests that have a created and/or paid date that fall within the specified date range.</li>
+			<li>Query each WordCamp site from the index results and retrieve additional data for each matched payment.</li>
+			<li>Parse the activity log for each payment and determine (or guess) if/when the payment was approved, if/when it was paid, and if/when it was cancelled or it failed.</li>
+			<li>Filter out payments don't have an approved, paid, or failed date within the specified date range.</li>
+		</ol>
+	";
+
+	/**
 	 * Report group.
 	 *
 	 * @var string

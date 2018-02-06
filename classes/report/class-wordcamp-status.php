@@ -39,6 +39,19 @@ class WordCamp_Status extends Date_Range {
 	public static $description = 'WordCamp application status changes during a given time period.';
 
 	/**
+	 * Report methodology.
+	 *
+	 * @var string
+	 */
+	public static $methodology = "
+		<ol>
+			<li>Retrieve all WordCamp posts that either don't have an event date yet or the event date isn't more than three months prior to the specified date range.</li>
+			<li>Parse the status log for each WordCamp and filter out log entries that aren't within the date range.</li>
+			<li>Filter out WordCamps that don't have any log entries within the date range and have an inactive status (rejected, cancelled, scheduled, or closed).</li>
+		</ol>
+	";
+
+	/**
 	 * Report group.
 	 *
 	 * @var string

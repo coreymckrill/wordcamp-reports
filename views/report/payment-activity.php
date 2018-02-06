@@ -22,9 +22,11 @@ use WordCamp\Reports\Report;
 		<?php echo esc_html( Report\Payment_Activity::$name ); ?>
 	</h1>
 
-	<p>
-		<?php echo wp_kses_post( Report\Payment_Activity::$description ); ?>
-	</p>
+	<?php echo wpautop( wp_kses_post( Report\Payment_Activity::$description ) ); ?>
+
+	<h4>Methodology</h4>
+
+	<?php echo wpautop( wp_kses_post( Report\Payment_Activity::$methodology ) ); ?>
 
 	<form method="post" action="">
 		<?php wp_nonce_field( 'run-report', Report\Payment_Activity::$slug . '-nonce' ); ?>

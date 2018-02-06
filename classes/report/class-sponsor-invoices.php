@@ -36,7 +36,21 @@ class Sponsor_Invoices extends Date_Range {
 	 *
 	 * @var string
 	 */
-	public static $description = 'Sponsor invoices sent and paid during a given time period.';
+	public static $description = 'Sponsor invoices sent and paid.';
+
+	/**
+	 * Report methodology.
+	 *
+	 * @var string
+	 */
+	public static $methodology = "
+		<ol>
+			<li>Retrieve data from QuickBooks Online via their API for invoices sent during the specified date range.</li>
+			<li>Match the invoice data against indexed invoices in the WordCamp database.</li>
+			<li>Also via the QuickBooks Online API, retrieve data for payments made during the date range.</li>
+			<li>Filter out payments that aren't related to invoices (but keep payments made to invoices not sent within the date range).</li>
+		</ol>
+	";
 
 	/**
 	 * Report group.

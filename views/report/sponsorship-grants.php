@@ -22,9 +22,11 @@ use WordCamp\Reports\Report;
 		<?php echo esc_html( Report\Sponsorship_Grants::$name ); ?>
 	</h1>
 
-	<p>
-		<?php echo wp_kses_post( Report\Sponsorship_Grants::$description ); ?>
-	</p>
+	<?php echo wpautop( wp_kses_post( Report\Sponsorship_Grants::$description ) ); ?>
+
+	<h4>Methodology</h4>
+
+	<?php echo wpautop( wp_kses_post( Report\Sponsorship_Grants::$methodology ) ); ?>
 
 	<form method="post" action="">
 		<?php wp_nonce_field( 'run-report', Report\Sponsorship_Grants::$slug . '-nonce' ); ?>

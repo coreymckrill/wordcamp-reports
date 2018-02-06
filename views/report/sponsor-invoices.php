@@ -22,9 +22,11 @@ use WordCamp\Reports\Report;
 		<?php echo esc_html( Report\Sponsor_Invoices::$name ); ?>
 	</h1>
 
-	<p>
-		<?php echo wp_kses_post( Report\Sponsor_Invoices::$description ); ?>
-	</p>
+	<?php echo wpautop( wp_kses_post( Report\Sponsor_Invoices::$description ) ); ?>
+
+	<h4>Methodology</h4>
+
+	<?php echo wpautop( wp_kses_post( Report\Sponsor_Invoices::$methodology ) ); ?>
 
 	<form method="post" action="">
 		<?php wp_nonce_field( 'run-report', Report\Sponsor_Invoices::$slug . '-nonce' ); ?>

@@ -38,6 +38,19 @@ class Ticket_Revenue extends Date_Range {
 	public static $description = 'A breakdown of WordCamp ticket revenue during a given time period.';
 
 	/**
+	 * Report methodology.
+	 *
+	 * @var string
+	 */
+	public static $methodology = "
+		<ol>
+			<li>Query the CampTix events log for attendee status changes to \"publish\" or \"refund\" during the specified date range.</li>
+			<li>Query each WordCamp site with matched events and retrieve ticket data related to each event.</li>
+			<li>Append the ticket data to the event data.</li>
+		</ol>
+	";
+
+	/**
 	 * Report group.
 	 *
 	 * @var string
