@@ -47,6 +47,7 @@ class Ticket_Revenue extends Date_Range {
 			<li>Query the CampTix events log for attendee status changes to \"publish\" or \"refund\" during the specified date range.</li>
 			<li>Query each WordCamp site with matched events and retrieve ticket data related to each event.</li>
 			<li>Append the ticket data to the event data.</li>
+			<li>Group the events based on whether the transaction was handled by WPCS. Assume all transactions in a currency supported by PayPal were handled by WPCS.</li>
 		</ol>
 	";
 
