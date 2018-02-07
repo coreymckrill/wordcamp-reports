@@ -117,7 +117,7 @@ abstract class Base {
 	 * @return int A time interval in seconds.
 	 */
 	protected function get_cache_expiration() {
-		return DAY_IN_SECONDS;
+		return WEEK_IN_SECONDS;
 	}
 
 	/**
