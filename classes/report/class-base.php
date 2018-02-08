@@ -11,7 +11,7 @@ use WordCamp\Reports\Utilities;
 /**
  * Class Base
  *
- * A base report class with methods for caching data and handling errors, plus some other helper methods.
+ * A base report class with methods for filtering and caching data, and handling errors, plus some other helper methods.
  *
  * @package WordCamp\Reports\Report
  */
@@ -66,6 +66,20 @@ abstract class Base {
 	public $error = null;
 
 	/**
+	 * Data fields that can be visible in a public context.
+	 *
+	 * @var array An associative array of key/default value pairs.
+	 */
+	protected $public_data_fields = array();
+
+	/**
+	 * Data fields that should only be visible in a private context.
+	 *
+	 * @var array An associative array of key/default value pairs.
+	 */
+	protected $private_data_fields = array();
+
+	/**
 	 * Base constructor.
 	 *
 	 * @param array $options    {
@@ -95,15 +109,6 @@ abstract class Base {
 	public abstract function get_data();
 
 	/**
-	 * Filter the report data prior to caching and compiling.
-	 *
-	 * @param array $data The data to filter.
-	 *
-	 * @return array
-	 */
-	protected abstract function filter_data_fields( array $data );
-
-	/**
 	 * Compile the report data into results.
 	 *
 	 * @param array $data The data to compile.
@@ -111,6 +116,27 @@ abstract class Base {
 	 * @return array
 	 */
 	public abstract function compile_report_data( array $data );
+
+	/**
+	 * Filter the report data prior to caching and compiling.
+	 *
+	 * @param array $data The data to filter.
+	 *
+	 * @return array
+	 */
+	protected function filter_data_fields( array $data ) {
+		$safelist = $this->public_data_fields;
+
+		if ( false === $this->options['public'] ) {
+			$safelist = array_merge( $safelist, $this->private_data_fields );
+		}
+
+		array_walk( $data, function ( &$row ) use ( $safelist ) {
+			$row = shortcode_atts( $safelist, $row );
+		} );
+
+		return $data;
+	}
 
 	/**
 	 * Generate a cache key.
