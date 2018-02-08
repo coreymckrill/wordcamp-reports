@@ -118,7 +118,8 @@ abstract class Base {
 	 * @return string
 	 */
 	protected function get_cache_key() {
-		$cache_key = 'report_' . self::$slug;
+		$context   = ( false === $this->options['public'] ) ? '_private' : '_public';
+		$cache_key = 'report_' . self::$slug . $context;
 
 		return $cache_key;
 	}
