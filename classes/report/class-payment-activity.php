@@ -164,8 +164,35 @@ class Payment_Activity extends Date_Range {
 			return true;
 		} );
 
-		// Maybe cache the data.
+		$data = $this->filter_data_fields( $data );
 		$this->maybe_cache_data( $data );
+
+		return $data;
+	}
+
+	/**
+	 * Filter the report data prior to caching and compiling.
+	 *
+	 * @param array $data The data to filter.
+	 *
+	 * @return array
+	 */
+	protected function filter_data_fields( array $data ) {
+		$safelist = array(
+			'blog_id'            => 0,
+			'post_id'            => 0,
+			'post_type'          => '',
+			'currency'           => '',
+			'amount'             => 0,
+			'status'             => '',
+			'timestamp_approved' => 0,
+			'timestamp_paid'     => 0,
+			'timestamp_failed'   => 0,
+		);
+
+		array_walk( $data, function ( &$row ) use ( $safelist ) {
+			$row = shortcode_atts( $safelist, $row );
+		} );
 
 		return $data;
 	}
@@ -585,8 +612,6 @@ class Payment_Activity extends Date_Range {
 				$payment['timestamp_approved'] = ( $payment['timestamp_approved'] > 0 ) ? date( 'Y-m-d', $payment['timestamp_approved'] ) : '';
 				$payment['timestamp_paid']     = ( $payment['timestamp_paid'] > 0 ) ? date( 'Y-m-d', $payment['timestamp_paid'] ) : '';
 				$payment['timestamp_failed']   = ( $payment['timestamp_failed'] > 0 ) ? date( 'Y-m-d', $payment['timestamp_failed'] ) : '';
-
-				unset( $payment['log'] );
 			} );
 
 			$exporter = new Reports\Export_CSV( array(
