@@ -73,12 +73,15 @@ abstract class Base {
 	 *
 	 *     @type bool $cache_data  True to look for cached data and cache the generated data set. Default true.
 	 *     @type bool $flush_cache True to delete any cached data generated with the current report parameters. Default false.
+	 *     @type bool $public      True if the report data is for public consumption. Reports can use this value to determine
+	 *                             whether to redact or remove some fields if necessary. Default true.
 	 * }
 	 */
 	public function __construct( array $options = array() ) {
 		$this->options = wp_parse_args( $options, array(
 			'cache_data'  => true,
 			'flush_cache' => false,
+			'public'      => true,
 		) );
 
 		$this->error = new \WP_Error();
@@ -90,6 +93,15 @@ abstract class Base {
 	 * @return array
 	 */
 	public abstract function get_data();
+
+	/**
+	 * Filter the report data prior to caching and compiling.
+	 *
+	 * @param array $data The data to filter.
+	 *
+	 * @return array
+	 */
+	protected abstract function filter_data_fields( array $data );
 
 	/**
 	 * Compile the report data into results.
