@@ -54,6 +54,24 @@ class Meetup_Groups extends Date_Range {
 	public static $group = 'meetup';
 
 	/**
+	 * Data fields that can be visible in a public context.
+	 *
+	 * @var array An associative array of key/default value pairs.
+	 */
+	protected $public_data_fields = array(
+		'name'          => '',
+		'urlname'       => '',
+		'city'          => '',
+		'state'         => '',
+		'country'       => '',
+		'lat'           => 0,
+		'lon'           => 0,
+		'member_count'  => 0,
+		'founded_date'  => 0,
+		'pro_join_date' => 0,
+	);
+
+	/**
 	 * Query and parse the data for the report.
 	 *
 	 * @return array
@@ -84,34 +102,6 @@ class Meetup_Groups extends Date_Range {
 
 		$data = $this->filter_data_fields( $data );
 		$this->maybe_cache_data( $data );
-
-		return $data;
-	}
-
-	/**
-	 * Filter the report data prior to caching and compiling.
-	 *
-	 * @param array $data The data to filter.
-	 *
-	 * @return array
-	 */
-	protected function filter_data_fields( array $data ) {
-		$safelist = array(
-			'name'          => '',
-			'urlname'       => '',
-			'city'          => '',
-			'state'         => '',
-			'country'       => '',
-			'lat'           => 0,
-			'lon'           => 0,
-			'member_count'  => 0,
-			'founded_date'  => 0,
-			'pro_join_date' => 0,
-		);
-
-		array_walk( $data, function ( &$group ) use ( $safelist ) {
-			$group = shortcode_atts( $safelist, $group );
-		} );
 
 		return $data;
 	}
