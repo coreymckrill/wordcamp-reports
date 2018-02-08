@@ -82,23 +82,36 @@ class Meetup_Groups extends Date_Range {
 			return array();
 		}
 
-		array_walk( $data, function( &$group ) {
-			$group = shortcode_atts( array(
-				'name'          => '',
-				'urlname'       => '',
-				'city'          => '',
-				'state'         => '',
-				'country'       => '',
-				'lat'           => 0,
-				'lon'           => 0,
-				'member_count'  => 0,
-				'founded_date'  => 0,
-				'pro_join_date' => 0,
-			), $group );
-		} );
-
-		// Maybe cache the data.
+		$data = $this->filter_data_fields( $data );
 		$this->maybe_cache_data( $data );
+
+		return $data;
+	}
+
+	/**
+	 * Filter the report data prior to caching and compiling.
+	 *
+	 * @param array $data The data to filter.
+	 *
+	 * @return array
+	 */
+	protected function filter_data_fields( array $data ) {
+		$safelist = array(
+			'name'          => '',
+			'urlname'       => '',
+			'city'          => '',
+			'state'         => '',
+			'country'       => '',
+			'lat'           => 0,
+			'lon'           => 0,
+			'member_count'  => 0,
+			'founded_date'  => 0,
+			'pro_join_date' => 0,
+		);
+
+		array_walk( $data, function ( &$group ) use ( $safelist ) {
+			$group = shortcode_atts( $safelist, $group );
+		} );
 
 		return $data;
 	}
