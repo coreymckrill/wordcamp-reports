@@ -9,6 +9,7 @@ namespace WordCamp\Reports\Report;
 defined( 'WPINC' ) || die();
 
 use WordCamp\Reports;
+use WordCamp\Utilities;
 use WordCamp\Budgets_Dashboard\Sponsor_Invoices as WCBD_Sponsor_Invoices;
 
 /**
@@ -76,7 +77,7 @@ class Sponsor_Invoices extends Date_Range {
 	/**
 	 * Currency exchange rate client.
 	 *
-	 * @var Reports\Currency_XRT_Client Utility to handle currency conversion.
+	 * @var Utilities\Currency_XRT_Client Utility to handle currency conversion.
 	 */
 	protected $xrt = null;
 
@@ -94,7 +95,7 @@ class Sponsor_Invoices extends Date_Range {
 	public function __construct( $start_date, $end_date, $wordcamp_id = 0, array $options = array() ) {
 		parent::__construct( $start_date, $end_date, $options );
 
-		$this->xrt = new Reports\Currency_XRT_Client();
+		$this->xrt = new Utilities\Currency_XRT_Client();
 
 		if ( $wordcamp_id && $this->validate_wordcamp_id( $wordcamp_id ) ) {
 			$this->wordcamp_id      = $wordcamp_id;
@@ -233,7 +234,7 @@ class Sponsor_Invoices extends Date_Range {
 	 * @return array|\WP_Error An array of invoices or an error object.
 	 */
 	protected function get_qbo_invoices() {
-		$qbo = new Reports\QBO_Client();
+		$qbo = new Utilities\QBO_Client();
 
 		$invoices = $qbo->get_transactions_by_date( 'Invoice', $this->start_date, $this->end_date );
 
@@ -320,7 +321,7 @@ class Sponsor_Invoices extends Date_Range {
 	 * @return array|\WP_Error An array of payments or an error object.
 	 */
 	protected function get_qbo_payments() {
-		$qbo = new Reports\QBO_Client();
+		$qbo = new Utilities\QBO_Client();
 
 		$payments = $qbo->get_transactions_by_date( 'Payment', $this->start_date, $this->end_date );
 
