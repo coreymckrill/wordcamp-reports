@@ -82,6 +82,23 @@ class Payment_Activity extends Date_Range {
 	protected $xrt = null;
 
 	/**
+	 * Data fields that can be visible in a public context.
+	 *
+	 * @var array An associative array of key/default value pairs.
+	 */
+	protected $public_data_fields = array(
+		'blog_id'            => 0,
+		'post_id'            => 0,
+		'post_type'          => '',
+		'currency'           => '',
+		'amount'             => 0,
+		'status'             => '',
+		'timestamp_approved' => 0,
+		'timestamp_paid'     => 0,
+		'timestamp_failed'   => 0,
+	);
+
+	/**
 	 * Payment_Activity constructor.
 	 *
 	 * @param string $start_date  The start of the date range for the report.
@@ -165,7 +182,7 @@ class Payment_Activity extends Date_Range {
 			return true;
 		} );
 
-		// Maybe cache the data.
+		$data = $this->filter_data_fields( $data );
 		$this->maybe_cache_data( $data );
 
 		return $data;
@@ -586,8 +603,6 @@ class Payment_Activity extends Date_Range {
 				$payment['timestamp_approved'] = ( $payment['timestamp_approved'] > 0 ) ? date( 'Y-m-d', $payment['timestamp_approved'] ) : '';
 				$payment['timestamp_paid']     = ( $payment['timestamp_paid'] > 0 ) ? date( 'Y-m-d', $payment['timestamp_paid'] ) : '';
 				$payment['timestamp_failed']   = ( $payment['timestamp_failed'] > 0 ) ? date( 'Y-m-d', $payment['timestamp_failed'] ) : '';
-
-				unset( $payment['log'] );
 			} );
 
 			$exporter = new Utilities\Export_CSV( array(

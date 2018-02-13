@@ -11,7 +11,7 @@ use WordCamp\Reports\Utilities;
 /**
  * Class Base
  *
- * A base report class with methods for caching data and handling errors, plus some other helper methods.
+ * A base report class with methods for filtering and caching data, and handling errors, plus some other helper methods.
  *
  * @package WordCamp\Reports\Report
  */
@@ -66,6 +66,20 @@ abstract class Base {
 	public $error = null;
 
 	/**
+	 * Data fields that can be visible in a public context.
+	 *
+	 * @var array An associative array of key/default value pairs.
+	 */
+	protected $public_data_fields = array();
+
+	/**
+	 * Data fields that should only be visible in a private context.
+	 *
+	 * @var array An associative array of key/default value pairs.
+	 */
+	protected $private_data_fields = array();
+
+	/**
 	 * Base constructor.
 	 *
 	 * @param array $options    {
@@ -73,12 +87,15 @@ abstract class Base {
 	 *
 	 *     @type bool $cache_data  True to look for cached data and cache the generated data set. Default true.
 	 *     @type bool $flush_cache True to delete any cached data generated with the current report parameters. Default false.
+	 *     @type bool $public      True if the report data is for public consumption. Reports can use this value to determine
+	 *                             whether to redact or remove some fields if necessary. Default true.
 	 * }
 	 */
 	public function __construct( array $options = array() ) {
 		$this->options = wp_parse_args( $options, array(
 			'cache_data'  => true,
 			'flush_cache' => false,
+			'public'      => true,
 		) );
 
 		$this->error = new \WP_Error();
@@ -101,12 +118,34 @@ abstract class Base {
 	public abstract function compile_report_data( array $data );
 
 	/**
+	 * Filter the report data prior to caching and compiling.
+	 *
+	 * @param array $data The data to filter.
+	 *
+	 * @return array
+	 */
+	protected function filter_data_fields( array $data ) {
+		$safelist = $this->public_data_fields;
+
+		if ( false === $this->options['public'] ) {
+			$safelist = array_merge( $safelist, $this->private_data_fields );
+		}
+
+		array_walk( $data, function ( &$row ) use ( $safelist ) {
+			$row = shortcode_atts( $safelist, $row );
+		} );
+
+		return $data;
+	}
+
+	/**
 	 * Generate a cache key.
 	 *
 	 * @return string
 	 */
 	protected function get_cache_key() {
-		$cache_key = 'report_' . self::$slug;
+		$context   = ( false === $this->options['public'] ) ? '_private' : '_public';
+		$cache_key = 'report_' . self::$slug . $context;
 
 		return $cache_key;
 	}

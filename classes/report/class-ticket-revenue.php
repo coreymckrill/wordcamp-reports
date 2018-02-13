@@ -88,6 +88,21 @@ class Ticket_Revenue extends Date_Range {
 	protected $xrt = null;
 
 	/**
+	 * Data fields that can be visible in a public context.
+	 *
+	 * @var array An associative array of key/default value pairs.
+	 */
+	protected $public_data_fields = array(
+		'timestamp'        => '',
+		'blog_id'          => 0,
+		'object_id'        => 0,
+		'type'             => '',
+		'currency'         => '',
+		'full_price'       => 0,
+		'discounted_price' => 0,
+	);
+
+	/**
 	 * Ticket_Revenue constructor.
 	 *
 	 * @param string $start_date  The start of the date range for the report.
@@ -159,21 +174,23 @@ class Ticket_Revenue extends Date_Range {
 
 		array_walk( $data, function( &$event ) use ( $ticket_details ) {
 			if ( false !== strpos( $event['message'], 'publish' ) ) {
-				$event['type'] = 'purchase';
+				$event['type'] = 'Purchase';
 				unset( $event['message'] );
 			} elseif ( false !== strpos( $event['message'], 'refund' ) ) {
-				$event['type'] = 'refund';
+				$event['type'] = 'Refund';
 				unset( $event['message'] );
 			}
 
-			if ( isset( $ticket_details[ $event['blog_id'] . '_' . $event['object_id'] ] ) ) {
-				$event['details'] = $ticket_details[ $event['blog_id'] . '_' . $event['object_id'] ];
-			} else {
-				$event['details'] = array();
+			$details_key = $event['blog_id'] . '_' . $event['object_id'];
+
+			if ( isset( $ticket_details[ $details_key ] ) ) {
+				$event['currency']         = $ticket_details[ $details_key ]['currency'];
+				$event['full_price']       = $ticket_details[ $details_key ]['full_price'];
+				$event['discounted_price'] = $ticket_details[ $details_key ]['discounted_price'];
 			}
 		} );
 
-		// Maybe cache the data.
+		$data = $this->filter_data_fields( $data );
 		$this->maybe_cache_data( $data );
 
 		return $data;
@@ -332,49 +349,45 @@ class Ticket_Revenue extends Date_Range {
 		$currencies                = array();
 
 		foreach ( $events as $event ) {
-			$details = $event['details'];
+			$currency = $event['currency'];
 
-			if ( ! isset( $details['currency'] ) ) {
-				continue;
-			}
-
-			if ( in_array( $details['currency'], $wpcs_supported_currencies, true ) ) {
+			if ( in_array( $currency, $wpcs_supported_currencies, true ) ) {
 				$group = 'wpcs';
 			} else {
 				$group = 'non_wpcs';
 			}
 
-			if ( ! in_array( $details['currency'], $currencies, true ) ) {
-				$data_groups[ $group ]['gross_revenue_by_currency'][ $details['currency'] ]   = 0;
-				$data_groups[ $group ]['discounts_by_currency'][ $details['currency'] ]       = 0;
-				$data_groups[ $group ]['amount_refunded_by_currency'][ $details['currency'] ] = 0;
-				$data_groups[ $group ]['net_revenue_by_currency'][ $details['currency'] ]     = 0;
-				$data_groups['total']['gross_revenue_by_currency'][ $details['currency'] ]    = 0;
-				$data_groups['total']['discounts_by_currency'][ $details['currency'] ]        = 0;
-				$data_groups['total']['amount_refunded_by_currency'][ $details['currency'] ]  = 0;
-				$data_groups['total']['net_revenue_by_currency'][ $details['currency'] ]      = 0;
-				$currencies[]                                                                 = $details['currency'];
+			if ( ! in_array( $currency, $currencies, true ) ) {
+				$data_groups[ $group ]['gross_revenue_by_currency'][ $currency ]   = 0;
+				$data_groups[ $group ]['discounts_by_currency'][ $currency ]       = 0;
+				$data_groups[ $group ]['amount_refunded_by_currency'][ $currency ] = 0;
+				$data_groups[ $group ]['net_revenue_by_currency'][ $currency ]     = 0;
+				$data_groups['total']['gross_revenue_by_currency'][ $currency ]    = 0;
+				$data_groups['total']['discounts_by_currency'][ $currency ]        = 0;
+				$data_groups['total']['amount_refunded_by_currency'][ $currency ]  = 0;
+				$data_groups['total']['net_revenue_by_currency'][ $currency ]      = 0;
+				$currencies[]                                                      = $currency;
 			}
 
 			switch ( $event['type'] ) {
-				case 'purchase' :
+				case 'Purchase' :
 					$data_groups[ $group ]['tickets_sold'] ++;
-					$data_groups[ $group ]['gross_revenue_by_currency'][ $details['currency'] ] += $details['full_price'];
-					$data_groups[ $group ]['discounts_by_currency'][ $details['currency'] ]     += $details['full_price'] - $details['discounted_price'];
-					$data_groups[ $group ]['net_revenue_by_currency'][ $details['currency'] ]   += $details['discounted_price'];
-					$data_groups['total']['tickets_sold'] ++;
-					$data_groups['total']['gross_revenue_by_currency'][ $details['currency'] ] += $details['full_price'];
-					$data_groups['total']['discounts_by_currency'][ $details['currency'] ]     += $details['full_price'] - $details['discounted_price'];
-					$data_groups['total']['net_revenue_by_currency'][ $details['currency'] ]   += $details['discounted_price'];
+					$data_groups[ $group ]['gross_revenue_by_currency'][ $currency ] += $event['full_price'];
+					$data_groups[ $group ]['discounts_by_currency'][ $currency ]     += $event['full_price'] - $event['discounted_price'];
+					$data_groups[ $group ]['net_revenue_by_currency'][ $currency ]   += $event['discounted_price'];
+					$data_groups['total']['tickets_sold']  ++;
+					$data_groups['total']['gross_revenue_by_currency'][ $currency ]  += $event['full_price'];
+					$data_groups['total']['discounts_by_currency'][ $currency ]      += $event['full_price'] - $event['discounted_price'];
+					$data_groups['total']['net_revenue_by_currency'][ $currency ]    += $event['discounted_price'];
 					break;
 
-				case 'refund' :
+				case 'Refund' :
 					$data_groups[ $group ]['tickets_refunded'] ++;
-					$data_groups[ $group ]['amount_refunded_by_currency'][ $details['currency'] ] += $details['discounted_price'];
-					$data_groups[ $group ]['net_revenue_by_currency'][ $details['currency'] ]     -= $details['discounted_price'];
-					$data_groups['total']['tickets_refunded'] ++;
-					$data_groups['total']['amount_refunded_by_currency'][ $details['currency'] ] += $details['discounted_price'];
-					$data_groups['total']['net_revenue_by_currency'][ $details['currency'] ]     -= $details['discounted_price'];
+					$data_groups[ $group ]['amount_refunded_by_currency'][ $currency ] += $event['discounted_price'];
+					$data_groups[ $group ]['net_revenue_by_currency'][ $currency ]     -= $event['discounted_price'];
+					$data_groups['total']['tickets_refunded']  ++;
+					$data_groups['total']['amount_refunded_by_currency'][ $currency ]  += $event['discounted_price'];
+					$data_groups['total']['net_revenue_by_currency'][ $currency ]      -= $event['discounted_price'];
 					break;
 			}
 		} // End foreach().
@@ -538,15 +551,6 @@ class Ticket_Revenue extends Date_Range {
 			$headers = array( 'Date', 'Blog ID', 'Attendee ID', 'Type', 'Currency', 'Full Price', 'Discounted Price' );
 
 			$data = $report->get_data();
-
-			array_walk( $data, function( &$event ) {
-				$event['type']             = ucwords( $event['type'] );
-				$event['currency']         = $event['details']['currency'];
-				$event['full_price']       = $event['details']['full_price'];
-				$event['discounted_price'] = $event['details']['discounted_price'];
-
-				unset( $event['details'] );
-			} );
 
 			$exporter = new Utilities\Export_CSV( array(
 				'filename' => $filename,
