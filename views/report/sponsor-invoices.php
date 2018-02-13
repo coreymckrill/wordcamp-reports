@@ -53,6 +53,7 @@ use WordCamp\Reports\Report;
 		</table>
 
 		<?php submit_button( 'Show results', 'primary', 'action', false ); ?>
+		<?php submit_button( 'Export CSV', 'secondary', 'action', false ); ?>
 	</form>
 
 	<?php if ( $report instanceof Report\Sponsor_Invoices ) : ?>
