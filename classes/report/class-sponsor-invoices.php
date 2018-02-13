@@ -136,6 +136,8 @@ class Sponsor_Invoices extends Date_Range {
 	/**
 	 * Query and parse the data for the report.
 	 *
+	 * @todo Take into account refunded invoice payments.
+	 *
 	 * @return array
 	 */
 	public function get_data() {
