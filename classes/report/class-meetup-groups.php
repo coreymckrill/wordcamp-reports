@@ -9,6 +9,7 @@ namespace WordCamp\Reports\Report;
 defined( 'WPINC' ) || die();
 
 use WordCamp\Reports;
+use WordCamp\Utilities;
 
 /**
  * Class Meetup_Groups
@@ -88,7 +89,7 @@ class Meetup_Groups extends Date_Range {
 			return $data;
 		}
 
-		$meetup = new Reports\Meetup_Client();
+		$meetup = new Utilities\Meetup_Client();
 
 		$data = $meetup->get_groups( array(
 			'pro_join_date_max' => $this->end_date->getTimestamp() * 1000, // Meetup API uses milliseconds.
@@ -303,7 +304,7 @@ class Meetup_Groups extends Date_Range {
 				$group['pro_join_date'] = ( $group['pro_join_date'] ) ? date( 'Y-m-d', $group['pro_join_date'] / 1000 ) : '';
 			} );
 
-			$exporter = new Reports\Export_CSV( array(
+			$exporter = new Utilities\Export_CSV( array(
 				'filename' => $filename,
 				'headers'  => $headers,
 				'data'     => $data,

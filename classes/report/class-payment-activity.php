@@ -9,6 +9,7 @@ namespace WordCamp\Reports\Report;
 defined( 'WPINC' ) || die();
 
 use WordCamp\Reports;
+use WordCamp\Utilities;
 use WordCamp\Budgets_Dashboard\Reimbursement_Requests;
 
 /**
@@ -76,7 +77,7 @@ class Payment_Activity extends Date_Range {
 	/**
 	 * Currency exchange rate client.
 	 *
-	 * @var Reports\Currency_XRT_Client Utility to handle currency conversion.
+	 * @var Utilities\Currency_XRT_Client Utility to handle currency conversion.
 	 */
 	protected $xrt = null;
 
@@ -111,7 +112,7 @@ class Payment_Activity extends Date_Range {
 	public function __construct( $start_date, $end_date, $wordcamp_id = 0, array $options = array() ) {
 		parent::__construct( $start_date, $end_date, $options );
 
-		$this->xrt = new Reports\Currency_XRT_Client();
+		$this->xrt = new Utilities\Currency_XRT_Client();
 
 		if ( $wordcamp_id && $this->validate_wordcamp_id( $wordcamp_id ) ) {
 			$this->wordcamp_id      = $wordcamp_id;
@@ -604,7 +605,7 @@ class Payment_Activity extends Date_Range {
 				$payment['timestamp_failed']   = ( $payment['timestamp_failed'] > 0 ) ? date( 'Y-m-d', $payment['timestamp_failed'] ) : '';
 			} );
 
-			$exporter = new Reports\Export_CSV( array(
+			$exporter = new Utilities\Export_CSV( array(
 				'filename' => $filename,
 				'headers'  => $headers,
 				'data'     => $data,

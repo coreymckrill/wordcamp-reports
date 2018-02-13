@@ -10,6 +10,7 @@ defined( 'WPINC' ) || die();
 
 use WordCamp\Reports;
 use WordCamp\Reports\Report;
+use WordCamp\Utilities;
 
 /**
  * Class Sponsorship_Grants
@@ -74,7 +75,7 @@ class Sponsorship_Grants extends Date_Range {
 	/**
 	 * Currency exchange rate client.
 	 *
-	 * @var Reports\Currency_XRT_Client Utility to handle currency conversion.
+	 * @var Utilities\Currency_XRT_Client Utility to handle currency conversion.
 	 */
 	protected $xrt = null;
 
@@ -105,7 +106,7 @@ class Sponsorship_Grants extends Date_Range {
 	public function __construct( $start_date, $end_date, $wordcamp_id = 0, array $options = array() ) {
 		parent::__construct( $start_date, $end_date, $options );
 
-		$this->xrt = new Reports\Currency_XRT_Client();
+		$this->xrt = new Utilities\Currency_XRT_Client();
 
 		if ( $wordcamp_id && $this->validate_wordcamp_id( $wordcamp_id ) ) {
 			$this->wordcamp_id      = $wordcamp_id;
@@ -409,7 +410,7 @@ class Sponsorship_Grants extends Date_Range {
 				$grant['timestamp'] = date( 'Y-m-d', $grant['timestamp'] );
 			} );
 
-			$exporter = new Reports\Export_CSV( array(
+			$exporter = new Utilities\Export_CSV( array(
 				'filename' => $filename,
 				'headers'  => $headers,
 				'data'     => $data,

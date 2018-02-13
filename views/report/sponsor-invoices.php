@@ -42,8 +42,8 @@ use WordCamp\Reports\Report;
 				<td><input type="date" id="end-date" name="end-date" value="<?php echo esc_attr( $end_date ) ?>" /></td>
 			</tr>
 			<tr>
-				<th scope="row"><label for="wordcamp-id">WordCamp ID (optional)</label></th>
-				<td><input type="number" id="wordcamp-id" name="wordcamp-id" value="<?php echo esc_attr( $wordcamp_id ) ?>" /></td>
+				<th scope="row"><label for="wordcamp-id">WordCamp (optional)</label></th>
+				<td><?php echo get_wordcamp_dropdown( 'wordcamp-id', array(), $wordcamp_id ); ?></td>
 			</tr>
 			<tr>
 				<th scope="row"><label for="refresh">Refresh results</label></th>
