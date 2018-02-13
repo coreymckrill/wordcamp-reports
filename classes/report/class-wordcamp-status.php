@@ -73,6 +73,18 @@ class WordCamp_Status extends Date_Range {
 	public $status = '';
 
 	/**
+	 * Data fields that can be visible in a public context.
+	 *
+	 * @var array An associative array of key/default value pairs.
+	 */
+	protected $public_data_fields = array(
+		'name'          => '',
+		'logs'          => array(),
+		'latest_log'    => '',
+		'latest_status' => '',
+	);
+
+	/**
 	 * WordCamp_Status constructor.
 	 *
 	 * @param string $start_date The start of the date range for the report.
@@ -244,7 +256,7 @@ class WordCamp_Status extends Date_Range {
 		// Remove the temporary locale change.
 		remove_filter( 'locale', array( $this, 'set_locale_to_en_US' ) );
 
-		// Maybe cache the data.
+		$data = $this->filter_data_fields( $data );
 		$this->maybe_cache_data( $data );
 
 		return $data;
