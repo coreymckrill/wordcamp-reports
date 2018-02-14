@@ -61,7 +61,7 @@ use WordCamp\Reports\Report;
 			</tbody>
 		</table>
 
-		<?php submit_button( 'Submit', 'primary', '' ); ?>
+		<?php submit_button( 'Show results', 'primary', '' ); ?>
 	</form>
 
 	<?php if ( $report instanceof Report\WordCamp_Status ) : ?>

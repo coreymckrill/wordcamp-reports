@@ -171,4 +171,90 @@ abstract class Date_Range extends Base {
 
 		return $expiration;
 	}
+
+	/**
+	 * Generate a simple array of years.
+	 *
+	 * @param int $start_year The first year in the array.
+	 * @param int $end_year   The last year in the array.
+	 *
+	 * @return array
+	 */
+	protected static function year_array( int $start_year, int $end_year ) {
+		return range( $start_year, $end_year, 1 );
+	}
+
+	/**
+	 * Generate an associative array of months, with numerical keys and string values.
+	 *
+	 * @return array
+	 */
+	protected static function month_array() {
+		$months = array();
+
+		foreach ( range( 1, 12 ) as $number ) {
+			$months[ $number ] = date( 'F', mktime( 0, 0, 0, $number, 10 ) );
+		}
+
+		return $months;
+	}
+
+	/**
+	 * Convert a time period within a given year into specific start and end dates.
+	 *
+	 * @param int        $year   The year containing the time period.
+	 * @param string|int $period The time period to convert. E.g. 2, 'February', 'q1'.
+	 *
+	 * @return array An associative array containing 'start_date' and 'end_date' keys with string values.
+	 */
+	protected static function convert_time_period_to_date_range( $year, $period = '' ) {
+		$range = array(
+			'start_date' => '',
+			'end_date'   => '',
+		);
+
+		if ( ! is_int( $year ) ) {
+			return $range;
+		}
+
+		$months = self::month_array();
+
+		if ( ! $period || 'all' === $period ) {
+			// Period is the entire year.
+			$range['start_date'] = "$year-01-01";
+			$range['end_date']   = "$year-12-31";
+		} elseif ( in_array( $period, array( 'q1', 'q2', 'q3', 'q4' ), true ) ) {
+			// Period is a quarter.
+			switch ( $period ) {
+				case 'q1' :
+					$range['start_date'] = "$year-01-01";
+					break;
+
+				case 'q2' :
+					$range['start_date'] = "$year-04-01";
+					break;
+
+				case 'q3' :
+					$range['start_date'] = "$year-07-01";
+					break;
+
+				case 'q4' :
+					$range['start_date'] = "$year-10-01";
+					break;
+			}
+
+			$range['end_date'] = date( 'Y-m-d', strtotime( '+ 3 months - 1 second', strtotime( $range['start_date'] ) ) );
+		} elseif ( array_key_exists( $period, $months ) || in_array( $period, $months, true ) ) {
+			// Period is a specific month.
+			if ( in_array( $period, $months, true ) ) {
+				// Month name given. Convert it to a number.
+				$period = array_search( $period, $months, true );
+			}
+
+			$range['start_date'] = "$year-$period-01";
+			$range['end_date']   = date( 'Y-m-d', strtotime( '+ 1 month - 1 second', strtotime( $range['start_date'] ) ) );
+		}
+
+		return $range;
+	}
 }

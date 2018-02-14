@@ -8,9 +8,11 @@ defined( 'WPINC' ) || die();
 
 use WordCamp\Reports\Report;
 
-/** @var string $start_date */
-/** @var string $end_date */
+/** @var string $year */
+/** @var string $period */
 /** @var string $status */
+/** @var array  $years */
+/** @var array  $months */
 /** @var array  $statuses */
 /** @var Report\WordCamp_Status|null $report */
 ?>
@@ -20,31 +22,42 @@ use WordCamp\Reports\Report;
 		<?php echo wp_kses_post( Report\WordCamp_Status::$description ); ?>
 	</p>
 
-	<form method="get" action="" class="report-form contact-form">
-		<input type="hidden" name="action" value="run-report" />
-
-		<div>
-			<label for="start-date" class="grunion-field-label">Start Date <span>(required)</span></label>
-			<input type="date" id="start-date" name="start-date" value="<?php echo esc_attr( $start_date ) ?>" />
-		</div>
-
-		<div>
-			<label for="end-date" class="grunion-field-label">End Date <span>(required)</span></label>
-			<input type="date" id="end-date" name="end-date" value="<?php echo esc_attr( $end_date ) ?>" />
-		</div>
-
-		<div>
-			<label for="status" class="grunion-field-label">Status</label>
-			<select id="status" name="status">
-				<option value="any"<?php selected( ( ! $status || 'any' === $status ) ); ?>>Any</option>
-				<?php foreach ( $statuses as $value => $label ) : ?>
-					<option value="<?php echo esc_attr( $value ); ?>"<?php selected( $value, $status ); ?>><?php echo esc_attr( $label ); ?></option>
+	<form method="get" action="" class="report-form">
+		<div class="field_report-year">
+			<label for="report-year">Year</label>
+			<select id="report-year" name="report-year">
+				<?php foreach ( $years as $year_value ) : ?>
+					<option value="<?php echo esc_attr( $year_value ); ?>"<?php selected( $year_value, $year ); ?>><?php echo esc_html( $year_value ); ?></option>
 				<?php endforeach; ?>
 			</select>
 		</div>
 
-		<div>
-			<?php submit_button( 'Submit', 'primary', '' ); ?>
+		<div class="field_period">
+			<label for="period">Time Period</label>
+			<select id="period" name="period">
+				<option value="all"<?php selected( 'all' === $period ); ?>>Entire year</option>
+				<option value="q1"<?php selected( 'q1' === $period ); ?>>1st quarter</option>
+				<option value="q2"<?php selected( 'q2' === $period ); ?>>2nd quarter</option>
+				<option value="q3"<?php selected( 'q3' === $period ); ?>>3rd quarter</option>
+				<option value="q4"<?php selected( 'q4' === $period ); ?>>4th quarter</option>
+				<?php foreach ( $months as $month_value => $month_label ) : ?>
+					<option value="<?php echo esc_attr( $month_value ); ?>"<?php selected( $month_value, $period ); ?>><?php echo esc_html( $month_label ); ?></option>
+				<?php endforeach; ?>
+			</select>
+		</div>
+
+		<div class="field_status">
+			<label for="status">Status</label>
+			<select id="status" name="status">
+				<option value="any"<?php selected( ( ! $status || 'any' === $status ) ); ?>>Any</option>
+				<?php foreach ( $statuses as $value => $label ) : ?>
+					<option value="<?php echo esc_attr( $value ); ?>"<?php selected( $value, $status ); ?>><?php echo esc_html( $label ); ?></option>
+				<?php endforeach; ?>
+			</select>
+		</div>
+
+		<div class="submit_show-results">
+			<?php submit_button( 'Show results', 'primary', 'action', false ); ?>
 		</div>
 	</form>
 

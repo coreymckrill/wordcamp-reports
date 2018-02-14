@@ -493,7 +493,7 @@ class WordCamp_Status extends Date_Range {
 
 		if ( 'run-report' === $action && wp_verify_nonce( $nonce, 'run-report' ) ) {
 			$options = array(
-				'earliest_start' => new \DateTime( '2007-11-17' ), // Date of first WordCamp in the system.
+				'earliest_start' => new \DateTime( '2015-01-01' ), // No status log data before 2015.
 			);
 
 			if ( $refresh ) {
@@ -516,32 +516,15 @@ class WordCamp_Status extends Date_Range {
 	 *
 	 * This shortcode is limited to use on pages.
 	 *
-	 * @todo Maybe restrict this form to logged in users?
-	 *
-	 * @param array $attr {
-	 *     Attributes of the wordcamp_status_report shortcode.
-	 *
-	 *     @type bool grunion_styles Enqueue styles from Jetpack's Contact Form for use with this report form.
-	 *                               Default true.
-	 * }
-	 *
 	 * @return string HTML content to display shortcode.
 	 */
-	public static function handle_shortcode( $attr ) {
+	public static function handle_shortcode() {
 		$html = '';
-
-		$atts = shortcode_atts( array(
-			'grunion_styles' => true,
-		), $attr, self::$shortcode_tag );
 
 		if ( 'page' === get_post_type() ) {
 			self::register_assets();
 
 			wp_enqueue_script( self::$slug );
-
-			if ( wp_validate_boolean( $atts['grunion_styles'] ) ) {
-				wp_enqueue_style( 'grunion.css' );
-			}
 
 			ob_start();
 			self::render_public_page();
@@ -557,26 +540,34 @@ class WordCamp_Status extends Date_Range {
 	 * @return void
 	 */
 	public static function render_public_page() {
-		$start_date = filter_input( INPUT_GET, 'start-date' );
-		$end_date   = filter_input( INPUT_GET, 'end-date' );
-		$status     = filter_input( INPUT_GET, 'status' );
-		$action     = filter_input( INPUT_GET, 'action' );
-		$statuses   = WordCamp_Loader::get_post_statuses();
+		// Apparently 'year' is a reserved URL parameter on the front end, so we prepend 'report-'.
+		$year   = filter_input( INPUT_GET, 'report-year', FILTER_VALIDATE_INT );
+		$period = filter_input( INPUT_GET, 'period' );
+		$status = filter_input( INPUT_GET, 'status' );
+		$action = filter_input( INPUT_GET, 'action' );
+
+		$years    = self::year_array( absint( date( 'Y' ) ), 2015 );
+		$months   = self::month_array();
+		$statuses = WordCamp_Loader::get_post_statuses();
+
+		if ( ! $year ) {
+			$year = absint( date( 'Y' ) );
+		}
+
+		if ( ! $period ) {
+			$period = absint( date( 'm' ) );
+		}
 
 		$report = null;
 
-		if ( 'run-report' === $action ) {
+		if ( 'Show results' === $action ) {
+			$range = self::convert_time_period_to_date_range( $year, $period );
+
 			$options = array(
-				'earliest_start' => new \DateTime( '2007-11-17' ), // Date of first WordCamp in the system.
-				'max_interval'   => new \DateInterval( 'P1Y' ), // 1 year. See http://php.net/manual/en/dateinterval.construct.php.
+				'earliest_start' => new \DateTime( '2015-01-01' ), // No status log data before 2015.
 			);
 
-			$report = new self( $start_date, $end_date, $status, $options );
-
-			// The report adjusts the end date in some circumstances.
-			if ( empty( $report->error->get_error_messages() ) ) {
-				$end_date = $report->end_date->format( 'Y-m-d' );
-			}
+			$report = new self( $range['start_date'], $range['end_date'], $status, $options );
 		}
 
 		include Reports\get_views_dir_path() . 'public/wordcamp-status.php';
