@@ -540,9 +540,10 @@ class WordCamp_Status extends Date_Range {
 	 * @return void
 	 */
 	public static function render_public_page() {
-		$year       = filter_input( INPUT_GET, 'year' );
-		$month      = filter_input( INPUT_GET, 'month' );
-		$status     = filter_input( INPUT_GET, 'status' );
+		// Apparently 'year' and 'month' are reserved URL parameters on the front end, so we prepend 'report-'.
+		$year       = filter_input( INPUT_GET, 'report-year' );
+		$month      = filter_input( INPUT_GET, 'report-month' );
+		$status     = filter_input( INPUT_GET, 'report-status' );
 		$action     = filter_input( INPUT_GET, 'action' );
 
 		if ( ! $year ) {
@@ -561,7 +562,7 @@ class WordCamp_Status extends Date_Range {
 
 		if ( 'Show results' === $action ) {
 			$start_date = "$year-$month-01";
-			$end_date   = strtotime( '+ 1 month - 1 second', strtotime( $start_date ) );
+			$end_date   = date( 'Y-m-d', strtotime( '+ 1 month - 1 second', strtotime( $start_date ) ) );
 
 			$report = new self( $start_date, $end_date, $status );
 

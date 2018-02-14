@@ -23,27 +23,27 @@ use WordCamp\Reports\Report;
 	</p>
 
 	<form method="get" action="" class="report-form">
-		<div class="field_year">
-			<label for="year">Year</label>
-			<select id="year" name="year">
+		<div class="field_report-year">
+			<label for="report-year">Year</label>
+			<select id="report-year" name="report-year">
 				<?php foreach ( $years as $year_value ) : ?>
 					<option value="<?php echo esc_attr( $year_value ); ?>"<?php selected( $year_value, $year ); ?>><?php echo esc_html( $year_value ); ?></option>
 				<?php endforeach; ?>
 			</select>
 		</div>
 
-		<div class="field_month">
-			<label for="month">Month</label>
-			<select id="month" name="month">
+		<div class="field_report-month">
+			<label for="report-month">Month</label>
+			<select id="report-month" name="report-month">
 				<?php foreach ( $months as $month_value => $month_label ) : ?>
 					<option value="<?php echo esc_attr( $month_value ); ?>"<?php selected( $month_value, $month ); ?>><?php echo esc_html( $month_label ); ?></option>
 				<?php endforeach; ?>
 			</select>
 		</div>
 
-		<div class="field_status">
-			<label for="status">Status</label>
-			<select id="status" name="status">
+		<div class="field_report-status">
+			<label for="report-status">Status</label>
+			<select id="report-status" name="report-status">
 				<option value="any"<?php selected( ( ! $status || 'any' === $status ) ); ?>>Any</option>
 				<?php foreach ( $statuses as $value => $label ) : ?>
 					<option value="<?php echo esc_attr( $value ); ?>"<?php selected( $value, $status ); ?>><?php echo esc_html( $label ); ?></option>
