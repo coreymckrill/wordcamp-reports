@@ -185,6 +185,20 @@ abstract class Date_Range extends Base {
 	}
 
 	/**
+	 * Generate an associative array of quarters, with abbreviation keys and label values.
+	 *
+	 * @return array
+	 */
+	protected static function quarter_array() {
+		return array(
+			'q1' => '1st quarter',
+			'q2' => '2nd quarter',
+			'q3' => '3rd quarter',
+			'q4' => '4th quarter',
+		);
+	}
+
+	/**
 	 * Generate an associative array of months, with numerical keys and string values.
 	 *
 	 * @return array
