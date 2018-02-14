@@ -546,7 +546,7 @@ class WordCamp_Status extends Date_Range {
 		$status     = filter_input( INPUT_GET, 'report-status' );
 		$action     = filter_input( INPUT_GET, 'action' );
 
-		$years    = self::year_array( date( 'Y' ), 2015 );
+		$years    = self::year_array( absint( date( 'Y' ) ), 2015 );
 		$months   = self::month_array();
 		$statuses = WordCamp_Loader::get_post_statuses();
 
@@ -561,24 +561,13 @@ class WordCamp_Status extends Date_Range {
 		$report = null;
 
 		if ( 'Show results' === $action ) {
-			$start_date = '';
-			$end_date   = '';
-
-			if ( in_array( $year, $years, true ) && array_key_exists( $month, $months ) ) {
-				$start_date = "$year-$month-01";
-				$end_date   = date( 'Y-m-d', strtotime( '+ 1 month - 1 second', strtotime( $start_date ) ) );
-			}
+			$range = self::convert_time_period_to_date_range( $year, $month );
 
 			$options = array(
 				'earliest_start' => new \DateTime( '2015-01-01' ),
 			);
 
-			$report = new self( $start_date, $end_date, $status, $options );
-
-			// The report adjusts the end date in some circumstances.
-			if ( empty( $report->error->get_error_messages() ) ) {
-				$end_date = $report->end_date->format( 'Y-m-d' );
-			}
+			$report = new self( $range['start_date'], $range['end_date'], $status, $options );
 		}
 
 		include Reports\get_views_dir_path() . 'public/wordcamp-status.php';
