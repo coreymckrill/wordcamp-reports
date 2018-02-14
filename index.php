@@ -142,17 +142,6 @@ function get_report_groups( $classes = array() ) {
 }
 
 /**
- * Load files that don't get autoloaded.
- *
- * @return void
- */
-function load_other_files() {
-	require_once trailingslashit( PLUGIN_DIR ) . 'utilities.php';
-}
-
-add_action( 'plugins_loaded', __NAMESPACE__ . '\load_other_files' );
-
-/**
  * Register the Reports page in the WP Admin.
  *
  * @hook action admin_menu

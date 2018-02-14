@@ -4,9 +4,9 @@
  */
 
 namespace WordCamp\Reports\Report;
-defined( 'WPINC' ) || die();
+use WP_Post;
 
-use WordCamp\Reports\Utilities;
+defined( 'WPINC' ) || die();
 
 /**
  * Class Base
@@ -234,7 +234,7 @@ abstract class Base {
 	protected function validate_wordcamp_id( $wordcamp_id ) {
 		$wordcamp = get_post( $wordcamp_id );
 
-		if ( ! $wordcamp instanceof \WP_Post || Utilities\get_wordcamp_post_type_id() !== get_post_type( $wordcamp ) ) {
+		if ( ! $wordcamp instanceof WP_Post || WCPT_POST_TYPE_ID !== get_post_type( $wordcamp ) ) {
 			$this->error->add( 'invalid_wordcamp_id', 'Please enter a valid WordCamp ID.' );
 
 			return false;

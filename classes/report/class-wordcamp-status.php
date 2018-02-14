@@ -6,8 +6,8 @@
 namespace WordCamp\Reports\Report;
 defined( 'WPINC' ) || die();
 
+use WordCamp_Loader;
 use WordCamp\Reports;
-use WordCamp\Reports\Utilities;
 
 /**
  * Class WordCamp_Status
@@ -132,7 +132,7 @@ class WordCamp_Status extends Date_Range {
 			return true;
 		}
 
-		if ( ! in_array( $status, array_keys( Utilities\get_all_wordcamp_statuses() ), true ) ) {
+		if ( ! in_array( $status, array_keys( WordCamp_Loader::get_post_statuses() ), true ) ) {
 			$this->error->add( 'invalid_status', 'Please enter a valid status ID.' );
 
 			return false;
@@ -190,7 +190,7 @@ class WordCamp_Status extends Date_Range {
 		add_filter( 'locale', array( $this, 'set_locale_to_en_US' ) );
 
 		$wordcamp_posts = $this->get_wordcamp_posts();
-		$statuses       = Utilities\get_all_wordcamp_statuses();
+		$statuses       = WordCamp_Loader::get_post_statuses();
 		$data           = array();
 
 		foreach ( $wordcamp_posts as $wordcamp ) {
@@ -298,7 +298,7 @@ class WordCamp_Status extends Date_Range {
 	 */
 	protected function get_wordcamp_posts() {
 		$post_args = array(
-			'post_type'           => Utilities\get_wordcamp_post_type_id(),
+			'post_type'           => WCPT_POST_TYPE_ID,
 			'post_status'         => 'any',
 			'posts_per_page'      => 9999,
 			'nopaging'            => true,
@@ -389,7 +389,7 @@ class WordCamp_Status extends Date_Range {
 	 * @return string
 	 */
 	protected function get_status_id_from_name( $status_name ) {
-		$statuses = array_flip( Utilities\get_all_wordcamp_statuses() );
+		$statuses = array_flip( WordCamp_Loader::get_post_statuses() );
 
 		if ( isset( $statuses[ $status_name ] ) ) {
 			return $statuses[ $status_name ];
@@ -425,7 +425,7 @@ class WordCamp_Status extends Date_Range {
 
 		$active_camps   = $data['active_camps'];
 		$inactive_camps = $data['inactive_camps'];
-		$statuses       = Utilities\get_all_wordcamp_statuses();
+		$statuses       = WordCamp_Loader::get_post_statuses();
 
 		if ( ! empty( $this->error->get_error_messages() ) ) {
 			?>
@@ -487,7 +487,7 @@ class WordCamp_Status extends Date_Range {
 		$refresh    = filter_input( INPUT_POST, 'refresh', FILTER_VALIDATE_BOOLEAN );
 		$action     = filter_input( INPUT_POST, 'action' );
 		$nonce      = filter_input( INPUT_POST, self::$slug . '-nonce' );
-		$statuses   = Utilities\get_all_wordcamp_statuses();
+		$statuses   = WordCamp_Loader::get_post_statuses();
 
 		$report = null;
 
@@ -561,7 +561,7 @@ class WordCamp_Status extends Date_Range {
 		$end_date   = filter_input( INPUT_GET, 'end-date' );
 		$status     = filter_input( INPUT_GET, 'status' );
 		$action     = filter_input( INPUT_GET, 'action' );
-		$statuses   = Utilities\get_all_wordcamp_statuses();
+		$statuses   = WordCamp_Loader::get_post_statuses();
 
 		$report = null;
 
