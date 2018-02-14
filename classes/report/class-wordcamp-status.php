@@ -541,10 +541,14 @@ class WordCamp_Status extends Date_Range {
 	 */
 	public static function render_public_page() {
 		// Apparently 'year' and 'month' are reserved URL parameters on the front end, so we prepend 'report-'.
-		$year       = filter_input( INPUT_GET, 'report-year' );
-		$month      = filter_input( INPUT_GET, 'report-month' );
+		$year       = filter_input( INPUT_GET, 'report-year', FILTER_VALIDATE_INT );
+		$month      = filter_input( INPUT_GET, 'report-month', FILTER_VALIDATE_INT );
 		$status     = filter_input( INPUT_GET, 'report-status' );
 		$action     = filter_input( INPUT_GET, 'action' );
+
+		$years    = self::year_array( date( 'Y' ), 2015 );
+		$months   = self::month_array();
+		$statuses = WordCamp_Loader::get_post_statuses();
 
 		if ( ! $year ) {
 			$year = absint( date( 'Y' ) );
@@ -554,17 +558,22 @@ class WordCamp_Status extends Date_Range {
 			$month = absint( date( 'm' ) );
 		}
 
-		$years    = self::year_array( date( 'Y' ), 2008 );
-		$months   = self::month_array();
-		$statuses = WordCamp_Loader::get_post_statuses();
-
 		$report = null;
 
 		if ( 'Show results' === $action ) {
-			$start_date = "$year-$month-01";
-			$end_date   = date( 'Y-m-d', strtotime( '+ 1 month - 1 second', strtotime( $start_date ) ) );
+			$start_date = '';
+			$end_date   = '';
 
-			$report = new self( $start_date, $end_date, $status );
+			if ( in_array( $year, $years, true ) && array_key_exists( $month, $months ) ) {
+				$start_date = "$year-$month-01";
+				$end_date   = date( 'Y-m-d', strtotime( '+ 1 month - 1 second', strtotime( $start_date ) ) );
+			}
+
+			$options = array(
+				'earliest_start' => new \DateTime( '2015-01-01' ),
+			);
+
+			$report = new self( $start_date, $end_date, $status, $options );
 
 			// The report adjusts the end date in some circumstances.
 			if ( empty( $report->error->get_error_messages() ) ) {
