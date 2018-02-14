@@ -540,11 +540,11 @@ class WordCamp_Status extends Date_Range {
 	 * @return void
 	 */
 	public static function render_public_page() {
-		// Apparently 'year' and 'month' are reserved URL parameters on the front end, so we prepend 'report-'.
-		$year       = filter_input( INPUT_GET, 'report-year', FILTER_VALIDATE_INT );
-		$month      = filter_input( INPUT_GET, 'report-month', FILTER_VALIDATE_INT );
-		$status     = filter_input( INPUT_GET, 'report-status' );
-		$action     = filter_input( INPUT_GET, 'action' );
+		// Apparently 'year' is a reserved URL parameter on the front end, so we prepend 'report-'.
+		$year   = filter_input( INPUT_GET, 'report-year', FILTER_VALIDATE_INT );
+		$period = filter_input( INPUT_GET, 'period' );
+		$status = filter_input( INPUT_GET, 'status' );
+		$action = filter_input( INPUT_GET, 'action' );
 
 		$years    = self::year_array( absint( date( 'Y' ) ), 2015 );
 		$months   = self::month_array();
@@ -554,14 +554,14 @@ class WordCamp_Status extends Date_Range {
 			$year = absint( date( 'Y' ) );
 		}
 
-		if ( ! $month ) {
-			$month = absint( date( 'm' ) );
+		if ( ! $period ) {
+			$period = absint( date( 'm' ) );
 		}
 
 		$report = null;
 
 		if ( 'Show results' === $action ) {
-			$range = self::convert_time_period_to_date_range( $year, $month );
+			$range = self::convert_time_period_to_date_range( $year, $period );
 
 			$options = array(
 				'earliest_start' => new \DateTime( '2015-01-01' ), // No status log data before 2015.
