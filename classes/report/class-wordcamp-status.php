@@ -516,32 +516,15 @@ class WordCamp_Status extends Date_Range {
 	 *
 	 * This shortcode is limited to use on pages.
 	 *
-	 * @todo Maybe restrict this form to logged in users?
-	 *
-	 * @param array $attr {
-	 *     Attributes of the wordcamp_status_report shortcode.
-	 *
-	 *     @type bool grunion_styles Enqueue styles from Jetpack's Contact Form for use with this report form.
-	 *                               Default true.
-	 * }
-	 *
 	 * @return string HTML content to display shortcode.
 	 */
-	public static function handle_shortcode( $attr ) {
+	public static function handle_shortcode() {
 		$html = '';
-
-		$atts = shortcode_atts( array(
-			'grunion_styles' => true,
-		), $attr, self::$shortcode_tag );
 
 		if ( 'page' === get_post_type() ) {
 			self::register_assets();
 
 			wp_enqueue_script( self::$slug );
-
-			if ( wp_validate_boolean( $atts['grunion_styles'] ) ) {
-				wp_enqueue_style( 'grunion.css' );
-			}
 
 			ob_start();
 			self::render_public_page();
@@ -557,21 +540,30 @@ class WordCamp_Status extends Date_Range {
 	 * @return void
 	 */
 	public static function render_public_page() {
-		$start_date = filter_input( INPUT_GET, 'start-date' );
-		$end_date   = filter_input( INPUT_GET, 'end-date' );
+		$year       = filter_input( INPUT_GET, 'year' );
+		$month      = filter_input( INPUT_GET, 'month' );
 		$status     = filter_input( INPUT_GET, 'status' );
 		$action     = filter_input( INPUT_GET, 'action' );
-		$statuses   = WordCamp_Loader::get_post_statuses();
+
+		if ( ! $year ) {
+			$year = absint( date( 'Y' ) );
+		}
+
+		if ( ! $month ) {
+			$month = absint( date( 'm' ) );
+		}
+
+		$years    = self::year_array( date( 'Y' ), 2008 );
+		$months   = self::month_array();
+		$statuses = WordCamp_Loader::get_post_statuses();
 
 		$report = null;
 
-		if ( 'run-report' === $action ) {
-			$options = array(
-				'earliest_start' => new \DateTime( '2007-11-17' ), // Date of first WordCamp in the system.
-				'max_interval'   => new \DateInterval( 'P1Y' ), // 1 year. See http://php.net/manual/en/dateinterval.construct.php.
-			);
+		if ( 'Show results' === $action ) {
+			$start_date = "$year-$month-01";
+			$end_date   = strtotime( '+ 1 month - 1 second', strtotime( $start_date ) );
 
-			$report = new self( $start_date, $end_date, $status, $options );
+			$report = new self( $start_date, $end_date, $status );
 
 			// The report adjusts the end date in some circumstances.
 			if ( empty( $report->error->get_error_messages() ) ) {

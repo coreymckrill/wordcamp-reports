@@ -171,4 +171,31 @@ abstract class Date_Range extends Base {
 
 		return $expiration;
 	}
+
+	/**
+	 * Generate a simple array of years.
+	 *
+	 * @param int $start_year The first year in the array.
+	 * @param int $end_year   The last year in the array.
+	 *
+	 * @return array
+	 */
+	protected static function year_array( int $start_year, int $end_year ) {
+		return range( $start_year, $end_year, 1 );
+	}
+
+	/**
+	 * Generate an associative array of months, with numerical keys and string values.
+	 *
+	 * @return array
+	 */
+	protected static function month_array() {
+		$months = array();
+
+		foreach ( range( 1, 12 ) as $number ) {
+			$months[ $number ] = date( 'F', mktime( 0, 0, 0, $number, 10 ) );
+		}
+
+		return $months;
+	}
 }
