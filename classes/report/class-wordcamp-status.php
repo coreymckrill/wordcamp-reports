@@ -493,7 +493,7 @@ class WordCamp_Status extends Date_Range {
 
 		if ( 'run-report' === $action && wp_verify_nonce( $nonce, 'run-report' ) ) {
 			$options = array(
-				'earliest_start' => new \DateTime( '2007-11-17' ), // Date of first WordCamp in the system.
+				'earliest_start' => new \DateTime( '2015-01-01' ), // No status log data before 2015.
 			);
 
 			if ( $refresh ) {
@@ -564,7 +564,7 @@ class WordCamp_Status extends Date_Range {
 			$range = self::convert_time_period_to_date_range( $year, $month );
 
 			$options = array(
-				'earliest_start' => new \DateTime( '2015-01-01' ),
+				'earliest_start' => new \DateTime( '2015-01-01' ), // No status log data before 2015.
 			);
 
 			$report = new self( $range['start_date'], $range['end_date'], $status, $options );
