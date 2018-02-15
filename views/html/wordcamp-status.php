@@ -61,7 +61,7 @@ defined( 'WPINC' ) || die();
 		<li>
 			<strong class="inactive-camp"><?php echo esc_html( $inactive_camp['name'] ); ?></strong> &ndash;
 			<?php echo esc_html( $statuses[ $inactive_camp['latest_status'] ] ); ?> &ndash;
-			<em>Last activity: <?php echo date( 'Y-m-d', $inactive_camp['latest_log']['timestamp'] ); ?></em>
+			<em>Last activity before date range: <?php echo date( 'Y-m-d', $inactive_camp['latest_log']['timestamp'] ); ?></em>
 		</li>
 	<?php endforeach; ?>
 	</ul>
