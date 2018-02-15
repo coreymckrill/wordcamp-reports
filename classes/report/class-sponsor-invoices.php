@@ -614,7 +614,7 @@ class Sponsor_Invoices extends Date_Range {
 		$wordcamp_id = filter_input( INPUT_GET, 'wordcamp-id' );
 		$action      = filter_input( INPUT_GET, 'action' );
 
-		$years    = self::year_array( absint( date( 'Y' ) ), 2015 );
+		$years    = self::year_array( absint( date( 'Y' ) ), 2016 );
 		$quarters = self::quarter_array();
 		$months   = self::month_array();
 
