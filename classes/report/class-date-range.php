@@ -9,7 +9,7 @@ defined( 'WPINC' ) || die();
 /**
  * Class Date_Range
  *
- * A base report class designed to generate a data set based on a specified date range.
+ * A base report class designed to generate a data set based on a specified date range. See `Base` for some developer notes.
  *
  * @package WordCamp\Reports\Report
  */
