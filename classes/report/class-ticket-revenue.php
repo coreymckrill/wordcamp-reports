@@ -60,11 +60,18 @@ class Ticket_Revenue extends Date_Range {
 	public static $group = 'finance';
 
 	/**
+	 * Shortcode tag for outputting the public report form.
+	 *
+	 * @var string
+	 */
+	public static $shortcode_tag = 'ticket_revenue_report';
+
+	/**
 	 * REST route for this report.
 	 *
 	 * @var string
 	 */
-	public static $rest_base = 'ticket-revenue';
+	//public static $rest_base = 'ticket-revenue';
 
 	/**
 	 * WordCamp post ID.
@@ -97,6 +104,7 @@ class Ticket_Revenue extends Date_Range {
 		'blog_id'          => 0,
 		'object_id'        => 0,
 		'type'             => '',
+		'method'           => '',
 		'currency'         => '',
 		'full_price'       => 0,
 		'discounted_price' => 0,
@@ -184,6 +192,7 @@ class Ticket_Revenue extends Date_Range {
 			$details_key = $event['blog_id'] . '_' . $event['object_id'];
 
 			if ( isset( $ticket_details[ $details_key ] ) ) {
+				$event['method']           = $ticket_details[ $details_key ]['method'];
 				$event['currency']         = $ticket_details[ $details_key ]['currency'];
 				$event['full_price']       = $ticket_details[ $details_key ]['full_price'];
 				$event['discounted_price'] = $ticket_details[ $details_key ]['discounted_price'];
@@ -307,6 +316,7 @@ class Ticket_Revenue extends Date_Range {
 
 		foreach ( $ticket_ids as $ticket_id ) {
 			$ticket_details[ $blog_id . '_' . $ticket_id ] = array(
+				'method'           => get_post_meta( $ticket_id, 'tix_payment_method', true ),
 				'currency'         => $currency,
 				'full_price'       => floatval( get_post_meta( $ticket_id, 'tix_ticket_price', true ) ),
 				'discounted_price' => floatval( get_post_meta( $ticket_id, 'tix_ticket_discounted_price', true ) ),
@@ -340,18 +350,34 @@ class Ticket_Revenue extends Date_Range {
 		);
 
 		$data_groups = array(
-			'wpcs'     => $initial_data,
-			'non_wpcs' => $initial_data,
-			'total'    => $initial_data,
+			'wpcs'     => array_merge( $initial_data, array(
+				'label'       => 'WPCS ticket revenue',
+				'description' => 'Transactions using a payment method for which WPCS has an established account.',
+			) ),
+			'non_wpcs' => array_merge( $initial_data, array(
+				'label'       => 'Non-WPCS ticket revenue',
+				'description' => 'Transactions using a payment method for which WPCS does not have an established account.',
+			) ),
+			'none'     => array_merge( $initial_data, array(
+				'label'       => 'Ticket transactions with no payment',
+				'description' => 'Transactions for which no payment method was recorded.',
+			) ),
+			'total'    => array_merge( $initial_data, array(
+				'label'       => 'Total ticket revenue',
+				'description' => '',
+			) ),
 		);
 
-		$wpcs_supported_currencies = self::get_wpcs_currencies();
-		$currencies                = array();
+		// Assume that all transactions through a gateway for which WPCS has an account, used the WPCS account.
+		$wpcs_payment_methods = array( 'paypal', 'stripe' );
+		$currencies           = array();
 
 		foreach ( $events as $event ) {
 			$currency = $event['currency'];
 
-			if ( in_array( $currency, $wpcs_supported_currencies, true ) ) {
+			if ( ! $event['method'] ) {
+				$group = 'none';
+			} elseif ( in_array( $event['method'], $wpcs_payment_methods, true ) ) {
 				$group = 'wpcs';
 			} else {
 				$group = 'non_wpcs';
@@ -426,25 +452,6 @@ class Ticket_Revenue extends Date_Range {
 	}
 
 	/**
-	 * Get the list of currencies supported by the WPCS payment account.
-	 *
-	 * Any camp using a currency supported by the CampTix PayPal payment gateway is assumed to be using the
-	 * WPCS PayPal account for ticket sales.
-	 *
-	 * @todo Adjust this when the Stripe gateway becomes available.
-	 *
-	 * Wrapper method to help minimize coupling with the CampTix plugin.
-	 *
-	 * @return array
-	 */
-	protected static function get_wpcs_currencies() {
-		/** @var \CampTix_Plugin $camptix */
-		global $camptix;
-
-		return $camptix->get_payment_method_by_id( 'paypal' )->supported_currencies;
-	}
-
-	/**
 	 * Render an HTML version of the report output.
 	 *
 	 * @return void
@@ -457,6 +464,7 @@ class Ticket_Revenue extends Date_Range {
 		$wordcamp_name = ( $this->wordcamp_site_id ) ? get_wordcamp_name( $this->wordcamp_site_id ) : '';
 		$wpcs          = $data['wpcs'];
 		$non_wpcs      = $data['non_wpcs'];
+		$none          = $data['none'];
 		$total         = $data['total'];
 
 		if ( ! empty( $this->error->get_error_messages() ) ) {
@@ -486,7 +494,7 @@ class Ticket_Revenue extends Date_Range {
 		     && current_user_can( 'manage_network' )
 		) {
 			$options = array(
-				'earliest_start' => new \DateTime( '2015-01-01' ), // Date of first indexed CampTix event in the system.
+				'earliest_start' => new \DateTime( '2015-01-01' ), // No indexed CampTix events before 2015.
 				'max_interval'   => new \DateInterval( 'P1Y' ), // 1 year. See http://php.net/manual/en/dateinterval.construct.php.
 			);
 
@@ -526,7 +534,7 @@ class Ticket_Revenue extends Date_Range {
 
 		if ( wp_verify_nonce( $nonce, 'run-report' ) && current_user_can( 'manage_network' ) ) {
 			$options = array(
-				'earliest_start' => new \DateTime( '2015-01-01' ), // Date of first indexed CampTix event in the system.
+				'earliest_start' => new \DateTime( '2015-01-01' ), // No indexed CampTix events before 2015.
 				'max_interval'   => new \DateInterval( 'P1Y' ), // 1 year. See http://php.net/manual/en/dateinterval.construct.php.
 			);
 
@@ -548,7 +556,7 @@ class Ticket_Revenue extends Date_Range {
 			$filename[] = $report->start_date->format( 'Y-m-d' );
 			$filename[] = $report->end_date->format( 'Y-m-d' );
 
-			$headers = array( 'Date', 'Blog ID', 'Attendee ID', 'Type', 'Currency', 'Full Price', 'Discounted Price' );
+			$headers = array( 'Date', 'Blog ID', 'Attendee ID', 'Type', 'Payment Method', 'Currency', 'Full Price', 'Discounted Price' );
 
 			$data = $report->get_data();
 
@@ -567,7 +575,68 @@ class Ticket_Revenue extends Date_Range {
 	}
 
 	/**
+	 * Determine whether to render the public report form.
+	 *
+	 * This shortcode is limited to use on pages.
+	 *
+	 * @return string HTML content to display shortcode.
+	 */
+	public static function handle_shortcode() {
+		$html = '';
+
+		if ( 'page' === get_post_type() ) {
+			ob_start();
+			self::render_public_page();
+			$html = ob_get_clean();
+		}
+
+		return $html;
+	}
+
+	/**
+	 * Render the page for this report on the front end.
+	 *
+	 * @return void
+	 */
+	public static function render_public_page() {
+		// Apparently 'year' is a reserved URL parameter on the front end, so we prepend 'report-'.
+		$year        = filter_input( INPUT_GET, 'report-year', FILTER_VALIDATE_INT );
+		$period      = filter_input( INPUT_GET, 'period' );
+		$wordcamp_id = filter_input( INPUT_GET, 'wordcamp-id' );
+		$action      = filter_input( INPUT_GET, 'action' );
+
+		$years    = self::year_array( absint( date( 'Y' ) ), 2015 );
+		$quarters = self::quarter_array();
+		$months   = self::month_array();
+
+		if ( ! $year ) {
+			$year = absint( date( 'Y' ) );
+		}
+
+		if ( ! $period ) {
+			$period = absint( date( 'm' ) );
+		}
+
+		$report = null;
+
+		if ( 'Show results' === $action ) {
+			$range = self::convert_time_period_to_date_range( $year, $period );
+
+			$options = array(
+				'earliest_start' => new \DateTime( '2015-01-01' ), // No indexed CampTix events before 2015.
+				'max_interval'   => new \DateInterval( 'P1Y' ), // 1 year. See http://php.net/manual/en/dateinterval.construct.php.
+			);
+
+			$report = new self( $range['start_date'], $range['end_date'], $wordcamp_id, $options );
+		}
+
+		include Reports\get_views_dir_path() . 'public/ticket-revenue.php';
+	}
+
+	/**
 	 * Prepare a REST response version of the report output.
+	 *
+	 * @todo Make the params here match the public page.
 	 *
 	 * @param \WP_REST_Request $request The REST request.
 	 *
@@ -581,7 +650,7 @@ class Ticket_Revenue extends Date_Range {
 		) );
 
 		$options = array(
-			'earliest_start' => new \DateTime( '2015-01-01' ), // Date of first indexed CampTix event in the system.
+			'earliest_start' => new \DateTime( '2015-01-01' ), // No indexed CampTix events before 2015.
 			'max_interval'   => new \DateInterval( 'P1Y' ), // 1 year. See http://php.net/manual/en/dateinterval.construct.php.
 		);
 

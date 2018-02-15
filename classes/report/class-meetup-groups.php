@@ -55,6 +55,13 @@ class Meetup_Groups extends Date_Range {
 	public static $group = 'meetup';
 
 	/**
+	 * Shortcode tag for outputting the public report form.
+	 *
+	 * @var string
+	 */
+	public static $shortcode_tag = 'meetup_groups_report';
+
+	/**
 	 * Data fields that can be visible in a public context.
 	 *
 	 * @var array An associative array of key/default value pairs.
@@ -240,7 +247,9 @@ class Meetup_Groups extends Date_Range {
 		     && wp_verify_nonce( $nonce, 'run-report' )
 		     && current_user_can( 'manage_network' )
 		) {
-			$options = array();
+			$options = array(
+				'earliest_start' => new \DateTime( '2015-01-01' ), // Chapter program started in 2015.
+			);
 
 			if ( $refresh ) {
 				$options['flush_cache'] = true;
@@ -265,7 +274,6 @@ class Meetup_Groups extends Date_Range {
 	public static function export_to_file() {
 		$start_date  = filter_input( INPUT_POST, 'start-date' );
 		$end_date    = filter_input( INPUT_POST, 'end-date' );
-		$wordcamp_id = filter_input( INPUT_POST, 'wordcamp-id' );
 		$refresh     = filter_input( INPUT_POST, 'refresh', FILTER_VALIDATE_BOOLEAN );
 		$action      = filter_input( INPUT_POST, 'action' );
 		$nonce       = filter_input( INPUT_POST, self::$slug . '-nonce' );
@@ -277,7 +285,9 @@ class Meetup_Groups extends Date_Range {
 		}
 
 		if ( wp_verify_nonce( $nonce, 'run-report' ) && current_user_can( 'manage_network' ) ) {
-			$options = array();
+			$options = array(
+				'earliest_start' => new \DateTime( '2015-01-01' ), // Chapter program started in 2015.
+			);
 
 			if ( $refresh ) {
 				$options['flush_cache'] = true;
@@ -316,5 +326,62 @@ class Meetup_Groups extends Date_Range {
 
 			$exporter->emit_file();
 		} // End if().
+	}
+
+	/**
+	 * Determine whether to render the public report form.
+	 *
+	 * This shortcode is limited to use on pages.
+	 *
+	 * @return string HTML content to display shortcode.
+	 */
+	public static function handle_shortcode() {
+		$html = '';
+
+		if ( 'page' === get_post_type() ) {
+			ob_start();
+			self::render_public_page();
+			$html = ob_get_clean();
+		}
+
+		return $html;
+	}
+
+	/**
+	 * Render the page for this report on the front end.
+	 *
+	 * @return void
+	 */
+	public static function render_public_page() {
+		// Apparently 'year' is a reserved URL parameter on the front end, so we prepend 'report-'.
+		$year   = filter_input( INPUT_GET, 'report-year', FILTER_VALIDATE_INT );
+		$period = filter_input( INPUT_GET, 'period' );
+		$action = filter_input( INPUT_GET, 'action' );
+
+		$years    = self::year_array( absint( date( 'Y' ) ), 2015 );
+		$quarters = self::quarter_array();
+		$months   = self::month_array();
+
+		if ( ! $year ) {
+			$year = absint( date( 'Y' ) );
+		}
+
+		if ( ! $period ) {
+			$period = absint( date( 'm' ) );
+		}
+
+		$report = null;
+
+		if ( 'Show results' === $action ) {
+			$range = self::convert_time_period_to_date_range( $year, $period );
+
+			$options = array(
+				'earliest_start' => new \DateTime( '2015-01-01' ), // Chapter program started in 2015.
+			);
+
+			$report = new self( $range['start_date'], $range['end_date'], $options );
+		}
+
+		include Reports\get_views_dir_path() . 'public/meetup-groups.php';
 	}
 }

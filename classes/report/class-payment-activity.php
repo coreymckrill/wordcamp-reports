@@ -61,6 +61,13 @@ class Payment_Activity extends Date_Range {
 	public static $group = 'finance';
 
 	/**
+	 * Shortcode tag for outputting the public report form.
+	 *
+	 * @var string
+	 */
+	public static $shortcode_tag = 'payment_activity_report';
+
+	/**
 	 * WordCamp post ID.
 	 *
 	 * @var int The ID of the WordCamp post for this report.
@@ -207,6 +214,11 @@ class Payment_Activity extends Date_Range {
 	 * @return array
 	 */
 	protected function get_indexed_payments() {
+		// Ensure all the needed files are loaded.
+		$wordcamp_payments_network_path = trailingslashit( str_replace( 'wordcamp-reports', 'wordcamp-payments-network', Reports\PLUGIN_DIR ) );
+		require_once $wordcamp_payments_network_path . 'includes/payment-requests-dashboard.php';
+		require_once $wordcamp_payments_network_path . 'includes/reimbursement-requests-dashboard.php';
+
 		/** @global \wpdb $wpdb */
 		global $wpdb;
 
@@ -533,7 +545,7 @@ class Payment_Activity extends Date_Range {
 		     && current_user_can( 'manage_network' )
 		) {
 			$options = array(
-				'earliest_start' => new \DateTime( '2015-01-26' ), // Date of first indexed payment in the system.
+				'earliest_start' => new \DateTime( '2015-01-01' ), // No indexed payment data before 2015.
 			);
 
 			if ( $refresh ) {
@@ -572,7 +584,7 @@ class Payment_Activity extends Date_Range {
 
 		if ( wp_verify_nonce( $nonce, 'run-report' ) && current_user_can( 'manage_network' ) ) {
 			$options = array(
-				'earliest_start' => new \DateTime( '2015-01-26' ), // Date of first indexed payment in the system.
+				'earliest_start' => new \DateTime( '2015-01-01' ), // No indexed payment data before 2015.
 			);
 
 			if ( $refresh ) {
@@ -616,5 +628,63 @@ class Payment_Activity extends Date_Range {
 
 			$exporter->emit_file();
 		} // End if().
+	}
+
+	/**
+	 * Determine whether to render the public report form.
+	 *
+	 * This shortcode is limited to use on pages.
+	 *
+	 * @return string HTML content to display shortcode.
+	 */
+	public static function handle_shortcode() {
+		$html = '';
+
+		if ( 'page' === get_post_type() ) {
+			ob_start();
+			self::render_public_page();
+			$html = ob_get_clean();
+		}
+
+		return $html;
+	}
+
+	/**
+	 * Render the page for this report on the front end.
+	 *
+	 * @return void
+	 */
+	public static function render_public_page() {
+		// Apparently 'year' is a reserved URL parameter on the front end, so we prepend 'report-'.
+		$year        = filter_input( INPUT_GET, 'report-year', FILTER_VALIDATE_INT );
+		$period      = filter_input( INPUT_GET, 'period' );
+		$wordcamp_id = filter_input( INPUT_GET, 'wordcamp-id' );
+		$action      = filter_input( INPUT_GET, 'action' );
+
+		$years    = self::year_array( absint( date( 'Y' ) ), 2015 );
+		$quarters = self::quarter_array();
+		$months   = self::month_array();
+
+		if ( ! $year ) {
+			$year = absint( date( 'Y' ) );
+		}
+
+		if ( ! $period ) {
+			$period = absint( date( 'm' ) );
+		}
+
+		$report = null;
+
+		if ( 'Show results' === $action ) {
+			$range = self::convert_time_period_to_date_range( $year, $period );
+
+			$options = array(
+				'earliest_start' => new \DateTime( '2015-01-01' ), // No indexed payment data before 2015.
+			);
+
+			$report = new self( $range['start_date'], $range['end_date'], $wordcamp_id, $options );
+		}
+
+		include Reports\get_views_dir_path() . 'public/payment-activity.php';
 	}
 }
