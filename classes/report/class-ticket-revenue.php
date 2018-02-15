@@ -64,7 +64,7 @@ class Ticket_Revenue extends Date_Range {
 	 *
 	 * @var string
 	 */
-	public static $rest_base = 'ticket-revenue';
+	//public static $rest_base = 'ticket-revenue';
 
 	/**
 	 * WordCamp post ID.
