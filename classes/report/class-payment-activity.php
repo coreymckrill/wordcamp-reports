@@ -213,23 +213,22 @@ class Payment_Activity extends Date_Range {
 		$payments_table       = \Payment_Requests_Dashboard::get_table_name();
 		$reimbursements_table = Reimbursement_Requests\get_index_table_name();
 
-		$extra_where = ( $this->wordcamp_site_id ) ? ' AND blog_id = ' . $this->wordcamp_site_id : '';
+		$extra_where = ( $this->wordcamp_site_id ) ? ' AND blog_id = ' . (int) $this->wordcamp_site_id : '';
 
 		$index_query = $wpdb->prepare( "
-				(
+			(
 				SELECT blog_id, post_id
 				FROM $payments_table
 				WHERE created <= %d
-				AND ( paid = 0 OR paid >= %d )
-				$extra_where
-				) UNION (
+					AND ( paid = 0 OR paid >= %d )
+					$extra_where
+			) UNION (
 				SELECT blog_id, request_id AS post_id
 				FROM $reimbursements_table
 				WHERE date_requested <= %d
-				AND ( date_paid = 0 OR date_paid >= %d )
-				$extra_where
-				)
-			",
+					AND ( date_paid = 0 OR date_paid >= %d )
+					$extra_where
+			)",
 			$this->end_date->getTimestamp(),
 			$this->start_date->getTimestamp(),
 			$this->end_date->getTimestamp(),
