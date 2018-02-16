@@ -69,7 +69,7 @@
 		toggleDetails: function( e ) {
 			e.preventDefault();
 
-			var $button = $( e.target ),
+			var $button = $( this ),
 				$icon = $button.find( '.status-log-toggle-icon' ),
 				$label = $button.find( '.status-log-toggle-label' ),
 				$log = $button.parent().next( '.status-log' );
