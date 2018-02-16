@@ -231,7 +231,7 @@ abstract class Date_Range extends Base {
 			return $range;
 		}
 
-		$months = self::month_array();
+		$months = static::month_array();
 
 		if ( ! $period || 'all' === $period ) {
 			// Period is the entire year.
